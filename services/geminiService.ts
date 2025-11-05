@@ -4,9 +4,12 @@ import type { ExtractionResult, PatientRecord } from '../types.ts';
 
 const getApiKey = (): string => {
   console.log("=== DEBUGGING API KEY ===");
-  console.log("All env vars:", import.meta.env);
-  console.log("VITE_API_KEY:", import.meta.env.VITE_API_KEY);
-  console.log("API_KEY:", import.meta.env.API_KEY);
+  console.log("All env vars:", JSON.stringify(import.meta.env, null, 2));
+  console.log("Env keys:", Object.keys(import.meta.env));
+
+  for (const key in import.meta.env) {
+    console.log(`${key}:`, import.meta.env[key]);
+  }
 
   const apiKey = import.meta.env.VITE_API_KEY ||
                  import.meta.env.API_KEY ||
