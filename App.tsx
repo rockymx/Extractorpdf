@@ -1,24 +1,30 @@
-
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import { OptionsScreen } from './components/OptionsScreen';
 import { FileUpload } from './components/FileUpload';
-import { DataTable } from './components/DataTable';
 import { LoadingSpinner } from './components/LoadingSpinner';
+import { ReportDetailsView } from './components/ReportDetailsView';
+import { PatientRecordsTable } from './components/PatientRecordsTable';
 import { ArrowDownTrayIcon } from './components/icons/ArrowDownTrayIcon';
-import { extractTextFromPdf, exportToExcel } from './utils/fileUtils';
+import { extractTextFromPdf, exportToExcel, formatAtencion } from './utils/fileUtils';
 import { extractDataWithGemini } from './services/geminiService';
-import type { ProcessedTable } from './types';
+import { getHistory, saveExtraction } from './utils/storageUtils';
+import type { ExtractionResult, StoredExtraction } from './types';
+import { ConfigurationScreen } from './components/ConfigurationScreen';
+import { ShowDataScreen } from './components/ShowDataScreen';
+import { SettingsProvider } from './context/SettingsContext';
+import { HistoryScreen } from './components/HistoryScreen';
 
-type Workflow = 'excel' | 'database' | null;
+export type CurrentPage = 'main' | 'config' | 'showData' | 'history';
 
 const App: React.FC = () => {
-  const [workflow, setWorkflow] = useState<Workflow>(null);
+  const [currentPage, setCurrentPage] = useState<CurrentPage>('main');
+  const [workflow, setWorkflow] = useState<'excel' | 'database' | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [extractedData, setExtractedData] = useState<ProcessedTable[] | null>(null);
+  const [extractedData, setExtractedData] = useState<ExtractionResult | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
+  
   const handleFileProcess = useCallback(async (file: File) => {
     setPdfFile(file);
     setIsLoading(true);
@@ -32,7 +38,16 @@ const App: React.FC = () => {
       }
       
       const data = await extractDataWithGemini(textContent);
+      
+      const newExtraction: StoredExtraction = {
+        id: new Date().toISOString(),
+        fileName: file.name,
+        extractionDate: new Date().toLocaleString(),
+        data: data,
+      };
+      saveExtraction(newExtraction);
       setExtractedData(data);
+
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred.');
@@ -47,25 +62,52 @@ const App: React.FC = () => {
     setExtractedData(null);
     setError(null);
     setIsLoading(false);
+    setCurrentPage('main');
   };
   
   const handleExport = () => {
-    if (extractedData && pdfFile) {
-        const fileName = pdfFile.name.replace(/\.pdf$/i, '') + '_extracted_data.xlsx';
-        exportToExcel(extractedData, fileName);
+    if (extractedData?.patientRecords && pdfFile) {
+        const fileName = pdfFile.name.replace(/\.pdf$/i, '') + '_pacientes.xlsx';
+        const dataForExport = extractedData.patientRecords.map(record => ({
+            'No.': record.noProgresivo,
+            'Nombre del Paciente': record.nombreDerechohabiente,
+            'Diagnóstico Principal': record.diagnosticoPrincipal,
+            'NSS': record.numeroSeguridadSocial,
+            'Hora Cita': record.horaCita,
+            'Inicio y Fin de Atencion': formatAtencion(record.inicioAtencion, record.finAtencion),
+            '1ra Vez': record.primeraVez,
+            'Recetas': record.numeroRecetas,
+            'Días Incap.': record.diasIncapacidad,
+            'Alta': record.alta,
+            'Pase Unidad': record.paseOtraUnidad,
+            'Riesgo Trab.': record.riesgoTrabajo,
+        }));
+        exportToExcel(dataForExport, fileName);
     }
   };
+  
+  const navigateTo = (page: CurrentPage) => {
+      // If navigating away from the main workflow, reset it
+      if (page !== 'main') {
+          handleReset();
+      }
+      setCurrentPage(page);
+  };
 
-  const renderContent = () => {
+  const renderMainContent = () => {
     if (!workflow) {
-      return <OptionsScreen onSelectWorkflow={setWorkflow} />;
+      return (
+        <div className="w-full">
+            <OptionsScreen onSelectWorkflow={setWorkflow} />
+        </div>
+      );
     }
 
     return (
       <div className="w-full max-w-6xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-slate-300">
-                {workflow === 'excel' ? 'Exportar a Excel' : 'Base de datos en la App'}
+                {pdfFile?.name ? `Resultados para: ${pdfFile.name}` : (workflow === 'excel' ? 'Exportar a Excel' : 'Base de datos en la App')}
             </h2>
             <button
                 onClick={handleReset}
@@ -95,13 +137,12 @@ const App: React.FC = () => {
                         className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg transition-colors"
                     >
                         <ArrowDownTrayIcon />
-                        Exportar a Excel
+                        Exportar Pacientes a Excel
                     </button>
                 </div>
             )}
-            {extractedData.map((table, index) => (
-                <DataTable key={index} table={table} />
-            ))}
+            <ReportDetailsView details={extractedData.reportDetails} />
+            <PatientRecordsTable records={extractedData.patientRecords} />
           </div>
         )}
       </div>
@@ -109,12 +150,17 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
-      <Header />
-      <main className="flex-grow flex items-center justify-center">
-        {renderContent()}
-      </main>
-    </div>
+    <SettingsProvider>
+      <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
+        <Header onNavigate={navigateTo} />
+        <main className="flex-grow flex flex-col items-center justify-center">
+          {currentPage === 'main' && renderMainContent()}
+          {currentPage === 'config' && <ConfigurationScreen onNavigateBack={() => navigateTo('main')} />}
+          {currentPage === 'showData' && <ShowDataScreen onNavigateBack={() => navigateTo('main')} />}
+          {currentPage === 'history' && <HistoryScreen onNavigateBack={() => navigateTo('main')} />}
+        </main>
+      </div>
+    </SettingsProvider>
   );
 };
 

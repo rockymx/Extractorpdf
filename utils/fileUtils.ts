@@ -1,5 +1,4 @@
-
-import type { ProcessedTable } from '../types';
+import type { PatientRecord } from '../types';
 
 // These are global variables exposed by the scripts in index.html
 declare const pdfjsLib: any;
@@ -27,21 +26,56 @@ export const extractTextFromPdf = async (file: File): Promise<string> => {
 };
 
 /**
- * Exports an array of processed tables to a single Excel file, with each table on a separate sheet.
- * @param tables The array of ProcessedTable objects to export.
+ * Formats start and end times into a combined string with duration.
+ * e.g., "15:47-15:55 T 8min"
+ * @param start The start time string (HH:MM).
+ * @param end The end time string (HH:MM).
+ * @returns A formatted string.
+ */
+export const formatAtencion = (start: string, end: string): string => {
+  if (start && end && /^\d{2}:\d{2}$/.test(start) && /^\d{2}:\d{2}$/.test(end)) {
+    try {
+      const [startHours, startMinutes] = start.split(':').map(Number);
+      const [endHours, endMinutes] = end.split(':').map(Number);
+
+      const startDate = new Date();
+      startDate.setHours(startHours, startMinutes, 0, 0);
+
+      const endDate = new Date();
+      endDate.setHours(endHours, endMinutes, 0, 0);
+
+      if (endDate < startDate) {
+        endDate.setDate(endDate.getDate() + 1);
+      }
+
+      const diff = (endDate.getTime() - startDate.getTime()) / 60000;
+
+      if (!isNaN(diff)) {
+        return `${start}-${end} T ${Math.round(diff)}min`;
+      }
+    } catch (e) {
+      // Fallback to default return if parsing fails
+    }
+  }
+  // Default return for any case that isn't two valid times, or if calculation fails
+  const parts = [start, end].filter(Boolean);
+  return parts.join('-');
+};
+
+
+/**
+ * Exports an array of objects to an Excel file.
+ * @param data The array of objects to export.
  * @param fileName The name of the Excel file to be downloaded.
  */
-export const exportToExcel = (tables: ProcessedTable[], fileName: string) => {
+export const exportToExcel = (data: any[], fileName: string) => {
+    if (data.length === 0) {
+        alert("No data to export.");
+        return;
+    }
     const wb = XLSX.utils.book_new();
-    
-    tables.forEach((table, index) => {
-        if (table.data.length > 0) {
-            // Sanitize sheet name to be compliant with Excel's rules (e.g., <= 31 chars, no invalid chars)
-            const sheetName = table.name.replace(/[\\/*?[\]:]/g, '').substring(0, 31) || `Sheet ${index + 1}`;
-            const ws = XLSX.utils.json_to_sheet(table.data);
-            XLSX.utils.book_append_sheet(wb, ws, sheetName);
-        }
-    });
-
+    const sheetName = 'Registros de Pacientes';
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
     XLSX.writeFile(wb, fileName);
 };
