@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useContext } from 'react';
 import { Header } from './components/Header.tsx';
 import { OptionsScreen } from './components/OptionsScreen.tsx';
 import { FileUpload } from './components/FileUpload.tsx';
@@ -13,23 +13,30 @@ import { getHistory, saveExtraction } from './utils/storageUtils.ts';
 import type { ExtractionResult, StoredExtraction } from './types.ts';
 import { ConfigurationScreen } from './components/ConfigurationScreen.tsx';
 import { ShowDataScreen } from './components/ShowDataScreen.tsx';
-import { SettingsProvider } from './context/SettingsContext.tsx';
+import { SettingsProvider, SettingsContext } from './context/SettingsContext.tsx';
 import { HistoryScreen } from './components/HistoryScreen.tsx';
 import { LoginScreen } from './components/LoginScreen.tsx';
 import { AuthProvider, useAuth } from './context/AuthContext.tsx';
+import { saveExtractionToHistory } from './services/extractionHistoryService.ts';
 
 export type CurrentPage = 'main' | 'config' | 'showData' | 'history' | 'login';
 
 const AppContent: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
+  const settingsContext = useContext(SettingsContext);
   const [currentPage, setCurrentPage] = useState<CurrentPage>('main');
   const [workflow, setWorkflow] = useState<'excel' | 'database' | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [extractedData, setExtractedData] = useState<ExtractionResult | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const handleFileProcess = useCallback(async (file: File) => {
+    if (!settingsContext?.apiKey) {
+      setError('Por favor, configura tu API Key de Gemini en la sección de Configuración.');
+      return;
+    }
+
     setPdfFile(file);
     setIsLoading(true);
     setError(null);
@@ -40,16 +47,21 @@ const AppContent: React.FC = () => {
       if (!textContent.trim()) {
         throw new Error("Could not extract text from the PDF. The file might be empty or image-based without OCR text layer.");
       }
-      
-      const data = await extractDataWithGemini(textContent);
-      
-      const newExtraction: StoredExtraction = {
-        id: new Date().toISOString(),
-        fileName: file.name,
-        extractionDate: new Date().toLocaleString(),
-        data: data,
-      };
-      saveExtraction(newExtraction);
+
+      const data = await extractDataWithGemini(textContent, settingsContext.apiKey);
+
+      if (user) {
+        await saveExtractionToHistory(user.id, file.name, data);
+      } else {
+        const newExtraction: StoredExtraction = {
+          id: new Date().toISOString(),
+          fileName: file.name,
+          extractionDate: new Date().toLocaleString(),
+          data: data,
+        };
+        saveExtraction(newExtraction);
+      }
+
       setExtractedData(data);
 
     } catch (err) {
@@ -58,7 +70,7 @@ const AppContent: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user, settingsContext?.apiKey]);
 
   const handleReset = () => {
     setWorkflow(null);

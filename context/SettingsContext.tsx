@@ -1,6 +1,7 @@
 
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import { getVisibleColumns, saveVisibleColumns, getHideNSSIdentifier, saveHideNSSIdentifier } from '../utils/storageUtils.ts';
+import { useAuth } from './AuthContext';
+import { getOrCreateUserSettings, updateUserSettings, UserSettings } from '../services/userProfileService';
 
 export type ColumnVisibility = {
   [key: string]: boolean;
@@ -11,6 +12,9 @@ interface SettingsContextType {
   setVisibleColumns: React.Dispatch<React.SetStateAction<ColumnVisibility>>;
   hideNSSIdentifier: boolean;
   setHideNSSIdentifier: React.Dispatch<React.SetStateAction<boolean>>;
+  apiKey: string;
+  setApiKey: (key: string) => Promise<void>;
+  isLoadingSettings: boolean;
 }
 
 export const configurableColumns: { key: string; label: string }[] = [
@@ -31,7 +35,6 @@ const defaultVisibility: ColumnVisibility = configurableColumns.reduce((acc, col
     return acc;
 }, {} as ColumnVisibility);
 
-
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 interface SettingsProviderProps {
@@ -39,25 +42,82 @@ interface SettingsProviderProps {
 }
 
 export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) => {
-  const [visibleColumns, setVisibleColumns] = useState<ColumnVisibility>(() => {
-    const savedSettings = getVisibleColumns();
-    return savedSettings ? { ...defaultVisibility, ...savedSettings } : defaultVisibility;
-  });
-  
-  const [hideNSSIdentifier, setHideNSSIdentifier] = useState<boolean>(() => {
-    return getHideNSSIdentifier();
-  });
+  const { user } = useAuth();
+  const [visibleColumns, setVisibleColumns] = useState<ColumnVisibility>(defaultVisibility);
+  const [hideNSSIdentifier, setHideNSSIdentifier] = useState<boolean>(false);
+  const [apiKey, setApiKeyState] = useState<string>('');
+  const [isLoadingSettings, setIsLoadingSettings] = useState<boolean>(true);
 
   useEffect(() => {
-    saveVisibleColumns(visibleColumns);
-  }, [visibleColumns]);
+    const loadSettings = async () => {
+      if (!user) {
+        setIsLoadingSettings(false);
+        return;
+      }
+
+      setIsLoadingSettings(true);
+      try {
+        const settings = await getOrCreateUserSettings(user.id);
+        if (settings?.gemini_api_key) {
+          setApiKeyState(settings.gemini_api_key);
+        }
+
+        const localColumns = localStorage.getItem('pdfExtractorColumnSettings');
+        if (localColumns) {
+          const parsed = JSON.parse(localColumns);
+          setVisibleColumns({ ...defaultVisibility, ...parsed });
+        }
+
+        const localHideNSS = localStorage.getItem('pdfExtractorHideNSSIdentifier');
+        if (localHideNSS) {
+          setHideNSSIdentifier(JSON.parse(localHideNSS));
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    };
+
+    loadSettings();
+  }, [user]);
 
   useEffect(() => {
-    saveHideNSSIdentifier(hideNSSIdentifier);
-  }, [hideNSSIdentifier]);
+    if (user) {
+      localStorage.setItem('pdfExtractorColumnSettings', JSON.stringify(visibleColumns));
+    }
+  }, [visibleColumns, user]);
+
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('pdfExtractorHideNSSIdentifier', JSON.stringify(hideNSSIdentifier));
+    }
+  }, [hideNSSIdentifier, user]);
+
+  const setApiKey = async (key: string) => {
+    if (!user) {
+      return;
+    }
+
+    try {
+      await updateUserSettings(user.id, key);
+      setApiKeyState(key);
+    } catch (error) {
+      console.error('Error updating API key:', error);
+      throw error;
+    }
+  };
 
   return (
-    <SettingsContext.Provider value={{ visibleColumns, setVisibleColumns, hideNSSIdentifier, setHideNSSIdentifier }}>
+    <SettingsContext.Provider value={{
+      visibleColumns,
+      setVisibleColumns,
+      hideNSSIdentifier,
+      setHideNSSIdentifier,
+      apiKey,
+      setApiKey,
+      isLoadingSettings
+    }}>
       {children}
     </SettingsContext.Provider>
   );

@@ -1,34 +1,56 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { SettingsContext } from '../context/SettingsContext';
 
 interface ConfigurationScreenProps {
   onNavigateBack: () => void;
 }
 
 export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({ onNavigateBack }) => {
-  const [apiKey, setApiKey] = useState('');
+  const settingsContext = useContext(SettingsContext);
+  const [localApiKey, setLocalApiKey] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const storedKey = localStorage.getItem('gemini_api_key');
-    if (storedKey) {
-      setApiKey(storedKey);
+    if (settingsContext?.apiKey) {
+      setLocalApiKey(settingsContext.apiKey);
     }
-  }, []);
+  }, [settingsContext?.apiKey]);
 
-  const handleSave = () => {
-    if (apiKey.trim()) {
-      localStorage.setItem('gemini_api_key', apiKey.trim());
+  const handleSave = async () => {
+    if (!localApiKey.trim() || !settingsContext) {
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await settingsContext.setApiKey(localApiKey.trim());
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
+    } catch (error) {
+      console.error('Error saving API key:', error);
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleClear = () => {
-    localStorage.removeItem('gemini_api_key');
-    setApiKey('');
-    setSaved(false);
+  const handleClear = async () => {
+    if (!settingsContext) {
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await settingsContext.setApiKey('');
+      setLocalApiKey('');
+      setSaved(false);
+    } catch (error) {
+      console.error('Error clearing API key:', error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -63,8 +85,8 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({ onNavi
             <div className="relative">
               <input
                 type={showKey ? 'text' : 'password'}
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
+                value={localApiKey}
+                onChange={(e) => setLocalApiKey(e.target.value)}
                 placeholder="AIzaSy..."
                 className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
               />
@@ -80,14 +102,15 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({ onNavi
             <div className="flex gap-3">
               <button
                 onClick={handleSave}
-                disabled={!apiKey.trim()}
+                disabled={!localApiKey.trim() || saving}
                 className="bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
               >
-                Guardar
+                {saving ? 'Guardando...' : 'Guardar'}
               </button>
               <button
                 onClick={handleClear}
-                className="bg-red-600 hover:bg-red-500 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+                disabled={saving}
+                className="bg-red-600 hover:bg-red-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
               >
                 Limpiar
               </button>
@@ -104,7 +127,7 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({ onNavi
         <div className="border-t border-slate-700 pt-6">
           <h4 className="text-lg font-semibold text-slate-200 mb-2">Nota de Seguridad</h4>
           <p className="text-slate-400 text-sm">
-            Tu API key se guarda localmente en tu navegador y nunca se envía a ningún servidor excepto a Google Gemini para procesar tus PDFs.
+            Tu API key se guarda de forma segura en Supabase y está vinculada a tu cuenta. Solo tú puedes acceder a ella y nunca se envía a ningún servidor excepto a Google Gemini para procesar tus PDFs.
           </p>
         </div>
       </div>

@@ -2,15 +2,18 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { ExtractionResult, PatientRecord } from '../types.ts';
 
-const getApiKey = (): string => {
-  const localStorageKey = localStorage.getItem('gemini_api_key');
+const getApiKey = (providedApiKey?: string): string => {
+  if (providedApiKey) {
+    return providedApiKey;
+  }
+
   const processEnvKey = (typeof process !== 'undefined' && process.env?.API_KEY) ? process.env.API_KEY : undefined;
   const importMetaKey = import.meta.env.VITE_API_KEY || import.meta.env.API_KEY;
 
-  const apiKey = localStorageKey || processEnvKey || importMetaKey;
+  const apiKey = processEnvKey || importMetaKey;
 
   if (!apiKey) {
-    throw new Error("API Key no configurada. Por favor, asegúrate de haber agregado el secret 'API_KEY' en bolt.new o configúrala en la sección de Configuración.");
+    throw new Error("API Key no configurada. Por favor, configúrala en la sección de Configuración.");
   }
 
   return apiKey;
@@ -18,8 +21,8 @@ const getApiKey = (): string => {
 
 let ai: GoogleGenAI | null = null;
 
-const getAI = (): GoogleGenAI => {
-  const currentApiKey = getApiKey();
+const getAI = (providedApiKey?: string): GoogleGenAI => {
+  const currentApiKey = getApiKey(providedApiKey);
 
   if (!ai || (ai as any)._apiKey !== currentApiKey) {
     ai = new GoogleGenAI({ apiKey: currentApiKey });
@@ -73,7 +76,7 @@ const responseSchema = {
   required: ["reportDetails", "patientRecords"]
 };
 
-export const extractDataWithGemini = async (pdfText: string): Promise<ExtractionResult> => {
+export const extractDataWithGemini = async (pdfText: string, apiKey?: string): Promise<ExtractionResult> => {
   try {
     const prompt = `You are a specialized data extraction AI for medical consultation reports from IMSS Mexico. Your task is to analyze the provided text from a PDF and extract specific information into a structured JSON format. Follow the instructions precisely.
 
@@ -113,7 +116,7 @@ The output MUST be a valid JSON object adhering strictly to the provided schema.
 ${pdfText}
 ---`;
     
-    const response = await getAI().models.generateContent({
+    const response = await getAI(apiKey).models.generateContent({
       model: "gemini-2.5-pro",
       contents: prompt,
       config: {
