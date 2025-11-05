@@ -3,10 +3,18 @@ import { GoogleGenAI, Type } from "@google/genai";
 import type { ExtractionResult, PatientRecord } from '../types.ts';
 
 const getApiKey = (): string => {
-  const apiKey = import.meta.env.VITE_API_KEY;
+  const apiKey = import.meta.env.VITE_API_KEY ||
+                 import.meta.env.API_KEY ||
+                 (window as any).ENV?.VITE_API_KEY ||
+                 (window as any).ENV?.API_KEY;
+
   if (!apiKey) {
-    throw new Error("API_KEY environment variable not set. Please configure it in the Secrets panel.");
+    console.error("Available env vars:", Object.keys(import.meta.env));
+    console.error("Window ENV:", (window as any).ENV);
+    throw new Error("API_KEY not found. Please add VITE_API_KEY in bolt.new Secrets panel.");
   }
+
+  console.log("API Key found, length:", apiKey.length);
   return apiKey;
 };
 
