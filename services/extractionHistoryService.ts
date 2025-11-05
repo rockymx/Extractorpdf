@@ -80,20 +80,30 @@ export const getExtractionById = async (id: string): Promise<ExtractionHistoryRe
 
 export const migrateLocalStorageToSupabase = async (userId: string): Promise<void> => {
   try {
+    const migrationKey = `migrated_${userId}`;
+    const alreadyMigrated = localStorage.getItem(migrationKey);
+
+    if (alreadyMigrated === 'true') {
+      return;
+    }
+
     const localHistory = localStorage.getItem('pdfExtractorHistory');
     if (!localHistory) {
+      localStorage.setItem(migrationKey, 'true');
       return;
     }
 
     const parsedHistory = JSON.parse(localHistory);
     if (!Array.isArray(parsedHistory) || parsedHistory.length === 0) {
       localStorage.removeItem('pdfExtractorHistory');
+      localStorage.setItem(migrationKey, 'true');
       return;
     }
 
     const existingHistory = await getExtractionHistory(userId);
     if (existingHistory.length > 0) {
       localStorage.removeItem('pdfExtractorHistory');
+      localStorage.setItem(migrationKey, 'true');
       return;
     }
 
@@ -115,6 +125,7 @@ export const migrateLocalStorageToSupabase = async (userId: string): Promise<voi
 
     console.log(`Successfully migrated ${migratedRecords.length} records to Supabase`);
     localStorage.removeItem('pdfExtractorHistory');
+    localStorage.setItem(migrationKey, 'true');
   } catch (error) {
     console.error('Error during migration:', error);
   }

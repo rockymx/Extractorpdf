@@ -29,6 +29,7 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) 
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [migrated, setMigrated] = useState(false);
 
   useEffect(() => {
     const loadHistory = async () => {
@@ -37,11 +38,16 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) 
         return;
       }
 
+      if (migrated) {
+        return;
+      }
+
       setLoading(true);
       try {
         await migrateLocalStorageToSupabase(user.id);
         const data = await getExtractionHistory(user.id);
         setHistory(data);
+        setMigrated(true);
       } catch (error) {
         console.error('Error loading history:', error);
       } finally {
@@ -50,7 +56,7 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) 
     };
 
     loadHistory();
-  }, [user]);
+  }, [user, migrated]);
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('¿Estás seguro de que quieres eliminar esta entrada del historial?')) {
