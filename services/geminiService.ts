@@ -2,13 +2,22 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { ExtractionResult, PatientRecord } from '../types.ts';
 
-const API_KEY = process.env.API_KEY;
+const getApiKey = (): string => {
+  const apiKey = import.meta.env.VITE_API_KEY;
+  if (!apiKey) {
+    throw new Error("API_KEY environment variable not set. Please configure it in the Secrets panel.");
+  }
+  return apiKey;
+};
 
-if (!API_KEY) {
-  throw new Error("API_KEY environment variable not set");
-}
+let ai: GoogleGenAI | null = null;
 
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+const getAI = (): GoogleGenAI => {
+  if (!ai) {
+    ai = new GoogleGenAI({ apiKey: getApiKey() });
+  }
+  return ai;
+};
 
 const responseSchema = {
   type: Type.OBJECT,
@@ -94,7 +103,7 @@ The output MUST be a valid JSON object adhering strictly to the provided schema.
 ${pdfText}
 ---`;
     
-    const response = await ai.models.generateContent({
+    const response = await getAI().models.generateContent({
       model: "gemini-2.5-pro",
       contents: prompt,
       config: {
