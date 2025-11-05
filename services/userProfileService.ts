@@ -44,6 +44,9 @@ export const createUserProfile = async (userId: string, profileData: Partial<Use
     .single();
 
   if (error) {
+    if (error.code === '23505') {
+      return await getUserProfile(userId);
+    }
     console.error('Error creating user profile:', error);
     return null;
   }
@@ -96,6 +99,9 @@ export const createUserSettings = async (userId: string, apiKey: string | null =
     .single();
 
   if (error) {
+    if (error.code === '23505') {
+      return await getUserSettings(userId);
+    }
     console.error('Error creating user settings:', error);
     return null;
   }

@@ -47,11 +47,17 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   const [hideNSSIdentifier, setHideNSSIdentifier] = useState<boolean>(false);
   const [apiKey, setApiKeyState] = useState<string>('');
   const [isLoadingSettings, setIsLoadingSettings] = useState<boolean>(true);
+  const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false);
 
   useEffect(() => {
     const loadSettings = async () => {
       if (!user) {
         setIsLoadingSettings(false);
+        setSettingsLoaded(false);
+        return;
+      }
+
+      if (settingsLoaded) {
         return;
       }
 
@@ -72,6 +78,8 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
         if (localHideNSS) {
           setHideNSSIdentifier(JSON.parse(localHideNSS));
         }
+
+        setSettingsLoaded(true);
       } catch (error) {
         console.error('Error loading settings:', error);
       } finally {
@@ -80,7 +88,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     };
 
     loadSettings();
-  }, [user]);
+  }, [user, settingsLoaded]);
 
   useEffect(() => {
     if (user) {
