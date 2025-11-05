@@ -100,7 +100,31 @@ export const extractDataWithGemini = async (pdfText: string, apiKey?: string): P
         *   **horaCita**: The time from the "HORA CITA" column for that patient.
         *   **inicioAtencion**: The time from the "INICIO ATENCIÓN" column.
         *   **finAtencion**: The time from the "FIN ATENCIÓN" column.
-        *   **primeraVez**: This is a critical field. Find the column group "1ra. VEZ (SI/NO)". This area is split into two sub-columns for "SI" and "NO". Your task is to check the patient's row in this area. If you find the literal text "SI", the value for this field is "SI". If you find the literal text "NO", the value is "NO". The presence of "SI" takes priority. For example, for patient #8 the correct value is "SI". For patient #9, the correct value is "NO". Extract the correct value based on this logic.
+        *   **primeraVez**: This is a CRITICAL field that requires careful visual analysis. Find the column header "1ra. VEZ (SI/NO)" or "1RA VEZ". This column is divided into TWO sub-columns side by side:
+            - Left sub-column: labeled "SI"
+            - Right sub-column: labeled "NO"
+
+            For each patient row, look at BOTH sub-columns in the "1ra. VEZ" area:
+            1. If the "SI" sub-column contains ANY mark, text, checkmark, 'X', or the literal text "SI" → return "SI"
+            2. If the "NO" sub-column contains ANY mark, text, checkmark, 'X', or the literal text "NO" → return "NO"
+            3. If BOTH sub-columns are marked, "SI" takes priority → return "SI"
+            4. If NEITHER sub-column is marked, default to "NO"
+
+            IMPORTANT: The marks can appear as:
+            - The literal text "SI" or "NO"
+            - An 'X' or checkmark symbol
+            - Any visual indicator in that specific cell
+            - Sometimes just the presence of text in that position
+
+            Look at the HORIZONTAL alignment with the patient's row number (No. Progresivo) to ensure you're reading the correct row. The mark will be in the same horizontal line as the patient's name and NSS number.
+
+            Examples based on the document structure:
+            - Patient #6: If you see a mark in the "NO" sub-column → "NO"
+            - Patient #7: If you see a mark in the "NO" sub-column → "NO"
+            - Patient #8: If you see a mark in the "SI" sub-column → "SI"
+            - Patient #9: If you see a mark in the "NO" sub-column → "NO"
+            - Patient #10: If you see a mark in the "NO" sub-column → "NO"
+            - Patient #11: If you see a mark in the "NO" sub-column → "NO"
         *   **diagnosticoPrincipal**: Locate the text labeled "DIAGNÓSTICO PRINCIPAL" within the patient's section. Extract the full text that follows this label. For patient #1, the value is "Gonartrosis, no especificada". For patient #3, the value is "Fractura de los huesos de otro(s) dedo(s) del pie".
         *   **numeroRecetas**: The number from the "NÚMERO DE RECETAS" column (column 7 in the grid with many columns). For row 1, the value is '0'.
         *   **alta**: Check the "ALTA" column. If it's marked (e.g., with an 'X'), the value is 'X'. Otherwise, an empty string. For patient #6, the value is 'X'.
