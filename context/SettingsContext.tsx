@@ -54,6 +54,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
       if (!user) {
         setIsLoadingSettings(false);
         setSettingsLoaded(false);
+        setApiKeyState('');
         return;
       }
 
@@ -64,8 +65,13 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
       setIsLoadingSettings(true);
       try {
         const settings = await getOrCreateUserSettings(user.id);
+        console.log('Loaded settings:', settings);
         if (settings?.gemini_api_key) {
+          console.log('Setting API key from Supabase');
           setApiKeyState(settings.gemini_api_key);
+        } else {
+          console.log('No API key found in Supabase');
+          setApiKeyState('');
         }
 
         const localColumns = localStorage.getItem('pdfExtractorColumnSettings');

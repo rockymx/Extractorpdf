@@ -32,7 +32,7 @@ const AppContent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const handleFileProcess = useCallback(async (file: File) => {
-    if (!settingsContext?.apiKey) {
+    if (!settingsContext?.apiKey || settingsContext.apiKey.trim() === '') {
       setError('Por favor, configura tu API Key de Gemini en la sección de Configuración.');
       return;
     }
@@ -181,26 +181,34 @@ const AppContent: React.FC = () => {
     return <LoginScreen onNavigateBack={() => {}} />;
   }
 
-  return (
-    <SettingsProvider>
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
-        <Header onNavigate={navigateTo} />
-        <main className="flex-grow flex flex-col items-center justify-center">
-          {currentPage === 'main' && renderMainContent()}
-          {currentPage === 'config' && <ConfigurationScreen onNavigateBack={() => navigateTo('main')} />}
-          {currentPage === 'showData' && <ShowDataScreen onNavigateBack={() => navigateTo('main')} />}
-          {currentPage === 'history' && <HistoryScreen onNavigateBack={() => navigateTo('main')} />}
-          {currentPage === 'login' && <LoginScreen onNavigateBack={() => navigateTo('main')} />}
-        </main>
+  if (settingsContext?.isLoadingSettings) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <LoadingSpinner message="Cargando configuración..." />
       </div>
-    </SettingsProvider>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
+      <Header onNavigate={navigateTo} />
+      <main className="flex-grow flex flex-col items-center justify-center">
+        {currentPage === 'main' && renderMainContent()}
+        {currentPage === 'config' && <ConfigurationScreen onNavigateBack={() => navigateTo('main')} />}
+        {currentPage === 'showData' && <ShowDataScreen onNavigateBack={() => navigateTo('main')} />}
+        {currentPage === 'history' && <HistoryScreen onNavigateBack={() => navigateTo('main')} />}
+        {currentPage === 'login' && <LoginScreen onNavigateBack={() => navigateTo('main')} />}
+      </main>
+    </div>
   );
 };
 
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <AppContent />
+      <SettingsProvider>
+        <AppContent />
+      </SettingsProvider>
     </AuthProvider>
   );
 };
