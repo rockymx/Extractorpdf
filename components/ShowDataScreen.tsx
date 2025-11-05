@@ -1,5 +1,6 @@
+
 import React, { useContext } from 'react';
-import { SettingsContext, configurableColumns } from '../context/SettingsContext';
+import { SettingsContext, configurableColumns } from '../context/SettingsContext.tsx';
 
 interface ShowDataScreenProps {
   onNavigateBack: () => void;

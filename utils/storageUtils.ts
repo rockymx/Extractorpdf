@@ -1,5 +1,6 @@
-import type { StoredExtraction } from '../types';
-import type { ColumnVisibility } from '../context/SettingsContext';
+
+import type { StoredExtraction } from '../types.ts';
+import type { ColumnVisibility } from '../context/SettingsContext.tsx';
 
 const HISTORY_STORAGE_KEY = 'pdfExtractorHistory';
 const COLUMN_SETTINGS_KEY = 'pdfExtractorColumnSettings';

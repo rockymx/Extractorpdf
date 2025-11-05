@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback } from 'react';
-import { DocumentArrowUpIcon } from './icons/DocumentArrowUpIcon';
+import { DocumentArrowUpIcon } from './icons/DocumentArrowUpIcon.tsx';
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;

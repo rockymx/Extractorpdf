@@ -1,5 +1,6 @@
+
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import { getVisibleColumns, saveVisibleColumns, getHideNSSIdentifier, saveHideNSSIdentifier } from '../utils/storageUtils';
+import { getVisibleColumns, saveVisibleColumns, getHideNSSIdentifier, saveHideNSSIdentifier } from '../utils/storageUtils.ts';
 
 export type ColumnVisibility = {
   [key: string]: boolean;

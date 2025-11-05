@@ -1,8 +1,9 @@
+
 import React from 'react';
-import type { ReportDetails } from '../types';
-import { UserCircleIcon } from './icons/UserCircleIcon';
-import { CalendarIcon } from './icons/CalendarIcon';
-import { BuildingLibraryIcon } from './icons/BuildingLibraryIcon';
+import type { ReportDetails } from '../types.ts';
+import { UserCircleIcon } from './icons/UserCircleIcon.tsx';
+import { CalendarIcon } from './icons/CalendarIcon.tsx';
+import { BuildingLibraryIcon } from './icons/BuildingLibraryIcon.tsx';
 
 interface ReportDetailsViewProps {
   details: ReportDetails;

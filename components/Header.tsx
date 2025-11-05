@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { Cog6ToothIcon } from './icons/Cog6ToothIcon';
-import type { CurrentPage } from '../App';
+import { Cog6ToothIcon } from './icons/Cog6ToothIcon.tsx';
+import type { CurrentPage } from '../App.tsx';
 
 interface HeaderProps {
     onNavigate: (page: CurrentPage) => void;
@@ -26,7 +27,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
     onNavigate(page);
     setIsMenuOpen(false);
   };
-  
+
   return (
     <header className="bg-slate-800/50 backdrop-blur-sm p-4 shadow-lg sticky top-0 z-10">
       <div className="max-w-6xl mx-auto flex justify-between items-center">
@@ -68,6 +69,13 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
                         className="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-700"
                     >
                         Mostrar Datos
+                    </button>
+                    <div className="border-t border-slate-700 my-1"></div>
+                     <button
+                        onClick={() => handleNavigate('login')}
+                        className="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-700"
+                    >
+                        Iniciar Sesión (Dummy)
                     </button>
                 </div>
             )}

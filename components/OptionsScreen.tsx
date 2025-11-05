@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { ArrowDownTrayIcon } from './icons/ArrowDownTrayIcon';
-import { TableCellsIcon } from './icons/TableCellsIcon';
+import { ArrowDownTrayIcon } from './icons/ArrowDownTrayIcon.tsx';
+import { TableCellsIcon } from './icons/TableCellsIcon.tsx';
 
 interface OptionsScreenProps {
   onSelectWorkflow: (workflow: 'excel' | 'database') => void;

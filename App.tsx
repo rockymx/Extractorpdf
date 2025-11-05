@@ -1,21 +1,23 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { Header } from './components/Header';
-import { OptionsScreen } from './components/OptionsScreen';
-import { FileUpload } from './components/FileUpload';
-import { LoadingSpinner } from './components/LoadingSpinner';
-import { ReportDetailsView } from './components/ReportDetailsView';
-import { PatientRecordsTable } from './components/PatientRecordsTable';
-import { ArrowDownTrayIcon } from './components/icons/ArrowDownTrayIcon';
-import { extractTextFromPdf, exportToExcel, formatAtencion } from './utils/fileUtils';
-import { extractDataWithGemini } from './services/geminiService';
-import { getHistory, saveExtraction } from './utils/storageUtils';
-import type { ExtractionResult, StoredExtraction } from './types';
-import { ConfigurationScreen } from './components/ConfigurationScreen';
-import { ShowDataScreen } from './components/ShowDataScreen';
-import { SettingsProvider } from './context/SettingsContext';
-import { HistoryScreen } from './components/HistoryScreen';
 
-export type CurrentPage = 'main' | 'config' | 'showData' | 'history';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Header } from './components/Header.tsx';
+import { OptionsScreen } from './components/OptionsScreen.tsx';
+import { FileUpload } from './components/FileUpload.tsx';
+import { LoadingSpinner } from './components/LoadingSpinner.tsx';
+import { ReportDetailsView } from './components/ReportDetailsView.tsx';
+import { PatientRecordsTable } from './components/PatientRecordsTable.tsx';
+import { ArrowDownTrayIcon } from './components/icons/ArrowDownTrayIcon.tsx';
+import { extractTextFromPdf, exportToExcel, formatAtencion } from './utils/fileUtils.ts';
+import { extractDataWithGemini } from './services/geminiService.ts';
+import { getHistory, saveExtraction } from './utils/storageUtils.ts';
+import type { ExtractionResult, StoredExtraction } from './types.ts';
+import { ConfigurationScreen } from './components/ConfigurationScreen.tsx';
+import { ShowDataScreen } from './components/ShowDataScreen.tsx';
+import { SettingsProvider } from './context/SettingsContext.tsx';
+import { HistoryScreen } from './components/HistoryScreen.tsx';
+import { LoginScreen } from './components/LoginScreen.tsx';
+
+export type CurrentPage = 'main' | 'config' | 'showData' | 'history' | 'login';
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<CurrentPage>('main');
@@ -88,8 +90,12 @@ const App: React.FC = () => {
   
   const navigateTo = (page: CurrentPage) => {
       // If navigating away from the main workflow, reset it
-      if (page !== 'main') {
-          handleReset();
+      if (page !== 'main' && currentPage === 'main') {
+          // Keep workflow state if just navigating between config/history/etc.
+          // Reset only when starting a new workflow page from another page.
+      }
+      if (page === 'main' && currentPage !== 'main') {
+        handleReset();
       }
       setCurrentPage(page);
   };
@@ -158,6 +164,7 @@ const App: React.FC = () => {
           {currentPage === 'config' && <ConfigurationScreen onNavigateBack={() => navigateTo('main')} />}
           {currentPage === 'showData' && <ShowDataScreen onNavigateBack={() => navigateTo('main')} />}
           {currentPage === 'history' && <HistoryScreen onNavigateBack={() => navigateTo('main')} />}
+          {currentPage === 'login' && <LoginScreen onNavigateBack={() => navigateTo('main')} />}
         </main>
       </div>
     </SettingsProvider>

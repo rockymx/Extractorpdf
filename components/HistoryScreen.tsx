@@ -1,14 +1,15 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
-import type { StoredExtraction } from '../types';
-import { getHistory, deleteExtraction, clearHistory } from '../utils/storageUtils';
-import { ReportDetailsView } from './ReportDetailsView';
-import { PatientRecordsTable } from './PatientRecordsTable';
-import { exportToExcel, formatAtencion } from '../utils/fileUtils';
-import { ClockIcon } from './icons/ClockIcon';
-import { EyeIcon } from './icons/EyeIcon';
-import { TrashIcon } from './icons/TrashIcon';
-import { ArrowDownTrayIcon } from './icons/ArrowDownTrayIcon';
-import { MagnifyingGlassIcon } from './icons/MagnifyingGlassIcon';
+import type { StoredExtraction } from '../types.ts';
+import { getHistory, deleteExtraction, clearHistory } from '../utils/storageUtils.ts';
+import { ReportDetailsView } from './ReportDetailsView.tsx';
+import { PatientRecordsTable } from './PatientRecordsTable.tsx';
+import { exportToExcel, formatAtencion } from '../utils/fileUtils.ts';
+import { ClockIcon } from './icons/ClockIcon.tsx';
+import { EyeIcon } from './icons/EyeIcon.tsx';
+import { TrashIcon } from './icons/TrashIcon.tsx';
+import { ArrowDownTrayIcon } from './icons/ArrowDownTrayIcon.tsx';
+import { MagnifyingGlassIcon } from './icons/MagnifyingGlassIcon.tsx';
 
 interface HistoryScreenProps {
   onNavigateBack: () => void;

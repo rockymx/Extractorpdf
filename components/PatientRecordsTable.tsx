@@ -1,7 +1,8 @@
+
 import React, { useContext, useState } from 'react';
-import type { PatientRecord } from '../types';
-import { formatAtencion } from '../utils/fileUtils';
-import { SettingsContext } from '../context/SettingsContext';
+import type { PatientRecord } from '../types.ts';
+import { formatAtencion } from '../utils/fileUtils.ts';
+import { SettingsContext } from '../context/SettingsContext.tsx';
 
 interface PatientRecordsTableProps {
   records: PatientRecord[];

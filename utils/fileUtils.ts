@@ -1,4 +1,5 @@
-import type { PatientRecord } from '../types';
+
+import type { PatientRecord } from '../types.ts';
 
 // These are global variables exposed by the scripts in index.html
 declare const pdfjsLib: any;
