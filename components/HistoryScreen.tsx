@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import type { StoredExtraction } from '../types.ts';
-import { getHistory, deleteExtraction, clearHistory } from '../utils/storageUtils.ts';
 import { ReportDetailsView } from './ReportDetailsView.tsx';
 import { PatientRecordsTable } from './PatientRecordsTable.tsx';
 import { exportToExcel, formatAtencion } from '../utils/fileUtils.ts';
@@ -10,38 +9,88 @@ import { EyeIcon } from './icons/EyeIcon.tsx';
 import { TrashIcon } from './icons/TrashIcon.tsx';
 import { ArrowDownTrayIcon } from './icons/ArrowDownTrayIcon.tsx';
 import { MagnifyingGlassIcon } from './icons/MagnifyingGlassIcon.tsx';
+import { useAuth } from '../context/AuthContext.tsx';
+import {
+  getExtractionHistory,
+  deleteExtractionFromHistory,
+  migrateLocalStorageToSupabase,
+  type ExtractionHistoryRecord
+} from '../services/extractionHistoryService.ts';
+import { LoadingSpinner } from './LoadingSpinner.tsx';
 
 interface HistoryScreenProps {
   onNavigateBack: () => void;
 }
 
 export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) => {
-  const [history, setHistory] = useState<StoredExtraction[]>([]);
-  const [selectedExtraction, setSelectedExtraction] = useState<StoredExtraction | null>(null);
+  const { user } = useAuth();
+  const [history, setHistory] = useState<ExtractionHistoryRecord[]>([]);
+  const [selectedExtraction, setSelectedExtraction] = useState<ExtractionHistoryRecord | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
-    setHistory(getHistory());
-  }, []);
+    const loadHistory = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar esta entrada del historial?')) {
-      deleteExtraction(id);
-      setHistory(getHistory());
+      setLoading(true);
+      try {
+        await migrateLocalStorageToSupabase(user.id);
+        const data = await getExtractionHistory(user.id);
+        setHistory(data);
+      } catch (error) {
+        console.error('Error loading history:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadHistory();
+  }, [user]);
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar esta entrada del historial?')) {
+      return;
+    }
+
+    setDeleting(id);
+    try {
+      const success = await deleteExtractionFromHistory(id);
+      if (success && user) {
+        const updatedHistory = await getExtractionHistory(user.id);
+        setHistory(updatedHistory);
+      }
+    } catch (error) {
+      console.error('Error deleting extraction:', error);
+    } finally {
+      setDeleting(null);
     }
   };
 
-  const handleClear = () => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar todo el historial? Esta acción no se puede deshacer.')) {
-      clearHistory();
+  const handleClear = async () => {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar todo el historial? Esta acción no se puede deshacer.') || !user) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await Promise.all(history.map(item => deleteExtractionFromHistory(item.id)));
       setHistory([]);
+    } catch (error) {
+      console.error('Error clearing history:', error);
+    } finally {
+      setLoading(false);
     }
   };
   
   const handleExport = () => {
     if (selectedExtraction) {
-        const { data, fileName } = selectedExtraction;
-        const exportFileName = fileName.replace(/\.pdf$/i, '') + '_pacientes.xlsx';
+        const { data, file_name } = selectedExtraction;
+        const exportFileName = file_name.replace(/\.pdf$/i, '') + '_pacientes.xlsx';
         const dataForExport = data.patientRecords.map(record => ({
             'No.': record.noProgresivo,
             'Nombre del Paciente': record.nombreDerechohabiente,
@@ -61,17 +110,25 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) 
   };
 
   const filteredHistory = useMemo(() => {
-    return history.filter(item => 
-      item.fileName.toLowerCase().includes(searchTerm.toLowerCase())
+    return history.filter(item =>
+      item.file_name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [history, searchTerm]);
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-6xl mx-auto px-4 py-8">
+        <LoadingSpinner message="Cargando historial..." />
+      </div>
+    );
+  }
 
   if (selectedExtraction) {
     return (
       <div className="w-full max-w-6xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-slate-300">
-            Resultados para: {selectedExtraction.fileName}
+            Resultados para: {selectedExtraction.file_name}
           </h2>
           <button
             onClick={() => setSelectedExtraction(null)}
@@ -132,25 +189,29 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) 
                 className="bg-slate-800 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-slate-700/50 transition-colors"
             >
                 <div className="flex-grow">
-                <p className="font-semibold text-sky-400">{item.fileName}</p>
-                <p className="text-sm text-slate-400">Extraído el: {item.extractionDate}</p>
+                <p className="font-semibold text-sky-400">{item.file_name}</p>
+                <p className="text-sm text-slate-400">
+                  Extraído el: {new Date(item.extraction_date).toLocaleString()}
+                </p>
                 </div>
                 <div className="flex gap-2 flex-shrink-0 self-end sm:self-center">
                 <button
                     onClick={() => setSelectedExtraction(item)}
                     className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-3 rounded-lg transition-colors"
-                    aria-label={`Ver extracción de ${item.fileName}`}
+                    aria-label={`Ver extracción de ${item.file_name}`}
+                    disabled={deleting === item.id}
                 >
                     <EyeIcon className="w-5 h-5" />
                     <span className="hidden sm:inline">Ver</span>
                 </button>
                 <button
                     onClick={() => handleDelete(item.id)}
-                    className="inline-flex items-center gap-2 bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-3 rounded-lg transition-colors"
-                    aria-label={`Eliminar extracción de ${item.fileName}`}
+                    className="inline-flex items-center gap-2 bg-slate-600 hover:bg-slate-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold py-2 px-3 rounded-lg transition-colors"
+                    aria-label={`Eliminar extracción de ${item.file_name}`}
+                    disabled={deleting === item.id}
                 >
                     <TrashIcon className="w-5 h-5" />
-                    <span className="hidden sm:inline">Eliminar</span>
+                    <span className="hidden sm:inline">{deleting === item.id ? 'Eliminando...' : 'Eliminar'}</span>
                 </button>
                 </div>
             </li>
