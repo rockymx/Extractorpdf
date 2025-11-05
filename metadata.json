@@ -1,0 +1,5 @@
+{
+  "name": "PDF Data Extractor Pro",
+  "description": "An application to extract tabular data from PDF files using AI and export it to Excel or manage it in an in-app database view.",
+  "requestFramePermissions": []
+}
