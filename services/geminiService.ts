@@ -3,38 +3,29 @@ import { GoogleGenAI, Type } from "@google/genai";
 import type { ExtractionResult, PatientRecord } from '../types.ts';
 
 const getApiKey = (): string => {
-  console.log("=== DEBUGGING API KEY ===");
-  console.log("All env vars:", JSON.stringify(import.meta.env, null, 2));
-  console.log("Env keys:", Object.keys(import.meta.env));
+  const localStorageKey = localStorage.getItem('gemini_api_key');
+  const envKey = import.meta.env.VITE_API_KEY ||
+                 import.meta.env.API_KEY;
 
-  for (const key in import.meta.env) {
-    console.log(`${key}:`, import.meta.env[key]);
-  }
-
-  const apiKey = import.meta.env.VITE_API_KEY ||
-                 import.meta.env.API_KEY ||
-                 (window as any).ENV?.VITE_API_KEY ||
-                 (window as any).ENV?.API_KEY;
+  const apiKey = localStorageKey || envKey;
 
   if (!apiKey) {
-    console.error("❌ No API key found!");
-    console.error("Please verify:");
-    console.error("1. You added a secret named 'VITE_API_KEY' in bolt.new");
-    console.error("2. The secret has a valid Google Gemini API key");
-    console.error("3. You refreshed the page after adding the secret");
-    throw new Error("API_KEY not found. Please add VITE_API_KEY in bolt.new Secrets panel.");
+    throw new Error("API Key no configurada. Por favor, ve a Configuración y agrega tu Google Gemini API Key.");
   }
 
-  console.log("✅ API Key found! Length:", apiKey.length);
   return apiKey;
 };
 
 let ai: GoogleGenAI | null = null;
 
 const getAI = (): GoogleGenAI => {
-  if (!ai) {
-    ai = new GoogleGenAI({ apiKey: getApiKey() });
+  const currentApiKey = getApiKey();
+
+  if (!ai || (ai as any)._apiKey !== currentApiKey) {
+    ai = new GoogleGenAI({ apiKey: currentApiKey });
+    (ai as any)._apiKey = currentApiKey;
   }
+
   return ai;
 };
 
