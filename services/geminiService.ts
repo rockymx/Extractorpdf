@@ -4,13 +4,13 @@ import type { ExtractionResult, PatientRecord } from '../types.ts';
 
 const getApiKey = (): string => {
   const localStorageKey = localStorage.getItem('gemini_api_key');
-  const envKey = import.meta.env.VITE_API_KEY ||
-                 import.meta.env.API_KEY;
+  const processEnvKey = (typeof process !== 'undefined' && process.env?.API_KEY) ? process.env.API_KEY : undefined;
+  const importMetaKey = import.meta.env.VITE_API_KEY || import.meta.env.API_KEY;
 
-  const apiKey = localStorageKey || envKey;
+  const apiKey = localStorageKey || processEnvKey || importMetaKey;
 
   if (!apiKey) {
-    throw new Error("API Key no configurada. Por favor, ve a Configuración y agrega tu Google Gemini API Key.");
+    throw new Error("API Key no configurada. Por favor, asegúrate de haber agregado el secret 'API_KEY' en bolt.new o configúrala en la sección de Configuración.");
   }
 
   return apiKey;
