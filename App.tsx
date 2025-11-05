@@ -16,10 +16,12 @@ import { ShowDataScreen } from './components/ShowDataScreen.tsx';
 import { SettingsProvider } from './context/SettingsContext.tsx';
 import { HistoryScreen } from './components/HistoryScreen.tsx';
 import { LoginScreen } from './components/LoginScreen.tsx';
+import { AuthProvider, useAuth } from './context/AuthContext.tsx';
 
 export type CurrentPage = 'main' | 'config' | 'showData' | 'history' | 'login';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { user, loading: authLoading } = useAuth();
   const [currentPage, setCurrentPage] = useState<CurrentPage>('main');
   const [workflow, setWorkflow] = useState<'excel' | 'database' | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -155,6 +157,18 @@ const App: React.FC = () => {
     );
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginScreen onNavigateBack={() => {}} />;
+  }
+
   return (
     <SettingsProvider>
       <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
@@ -168,6 +182,14 @@ const App: React.FC = () => {
         </main>
       </div>
     </SettingsProvider>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 };
 
