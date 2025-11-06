@@ -85,57 +85,84 @@ export const updateUserProfile = async (userId: string, profileData: Partial<Use
 };
 
 export const getUserSettings = async (userId: string): Promise<UserSettings | null> => {
-  const { data, error } = await supabase
-    .from('user_settings')
-    .select('*')
-    .eq('user_id', userId)
-    .maybeSingle();
+  try {
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
 
-  if (error) {
-    console.error('Error fetching user settings:', error);
+    if (error) {
+      if (error.code === 'PGRST116') {
+        console.error('Multiple user_settings records found for user_id:', userId);
+        console.error('This indicates a database integrity issue. Please run cleanup migration.');
+      }
+      console.error('Error fetching user settings:', error);
+      return null;
+    }
+
+    return data;
+  } catch (err) {
+    console.error('Unexpected error in getUserSettings:', err);
     return null;
   }
-
-  return data;
 };
 
 export const createUserSettings = async (userId: string, apiKey: string | null = null): Promise<UserSettings | null> => {
-  const { data, error } = await supabase
-    .from('user_settings')
-    .insert({
-      user_id: userId,
-      gemini_api_key: apiKey,
-    })
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('user_settings')
+      .insert({
+        user_id: userId,
+        gemini_api_key: apiKey,
+      })
+      .select()
+      .single();
 
-  if (error) {
-    if (error.code === '23505') {
-      return await getUserSettings(userId);
+    if (error) {
+      if (error.code === '23505') {
+        return await getUserSettings(userId);
+      }
+      if (error.code === '42501') {
+        console.error('Authentication error: Cannot create user settings. User session may be expired.');
+        return null;
+      }
+      console.error('Error creating user settings:', error);
+      return null;
     }
-    console.error('Error creating user settings:', error);
+
+    return data;
+  } catch (err) {
+    console.error('Unexpected error in createUserSettings:', err);
     return null;
   }
-
-  return data;
 };
 
 export const updateUserSettings = async (userId: string, apiKey: string): Promise<UserSettings | null> => {
-  const { data, error } = await supabase
-    .from('user_settings')
-    .update({
-      gemini_api_key: apiKey,
-    })
-    .eq('user_id', userId)
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('user_settings')
+      .update({
+        gemini_api_key: apiKey,
+      })
+      .eq('user_id', userId)
+      .select()
+      .single();
 
-  if (error) {
-    console.error('Error updating user settings:', error);
+    if (error) {
+      if (error.code === '42501') {
+        console.error('Authentication error: Cannot update user settings. User session may be expired.');
+        return null;
+      }
+      console.error('Error updating user settings:', error);
+      return null;
+    }
+
+    return data;
+  } catch (err) {
+    console.error('Unexpected error in updateUserSettings:', err);
     return null;
   }
-
-  return data;
 };
 
 export const updateUserPreferences = async (
@@ -153,6 +180,10 @@ export const updateUserPreferences = async (
     updateData.privacy_settings = privacySettings;
   }
 
+  if (Object.keys(updateData).length === 0) {
+    return null;
+  }
+
   const { data, error } = await supabase
     .from('user_settings')
     .update(updateData)
@@ -166,8 +197,25 @@ export const updateUserPreferences = async (
   }
 
   if (!data) {
-    await getOrCreateUserSettings(userId);
-    return await updateUserPreferences(userId, columnPreferences, privacySettings);
+    const settings = await getOrCreateUserSettings(userId);
+    if (!settings) {
+      console.error('Failed to create user settings for userId:', userId);
+      return null;
+    }
+
+    const { data: retryData, error: retryError } = await supabase
+      .from('user_settings')
+      .update(updateData)
+      .eq('user_id', userId)
+      .select()
+      .maybeSingle();
+
+    if (retryError) {
+      console.error('Error updating user preferences on retry:', retryError);
+      return null;
+    }
+
+    return retryData;
   }
 
   return data;

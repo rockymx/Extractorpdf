@@ -2,6 +2,7 @@
 import React, { createContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { getOrCreateUserSettings, updateUserSettings, updateUserPreferences, UserSettings } from '../services/userProfileService';
+import { validateSession } from '../utils/authUtils';
 
 export type ColumnVisibility = {
   [key: string]: boolean;
@@ -42,13 +43,14 @@ interface SettingsProviderProps {
 }
 
 export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [visibleColumns, setVisibleColumns] = useState<ColumnVisibility>(defaultVisibility);
   const [hideNSSIdentifier, setHideNSSIdentifier] = useState<boolean>(false);
   const [apiKey, setApiKeyState] = useState<string>('');
   const [isLoadingSettings, setIsLoadingSettings] = useState<boolean>(true);
   const [userId, setUserId] = useState<string | null>(null);
   const isInitialLoadRef = useRef<boolean>(true);
+  const isSavingRef = useRef<boolean>(false);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -105,7 +107,13 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!user || userId !== user.id || isInitialLoadRef.current) {
+    if (!user || userId !== user.id || isInitialLoadRef.current || isSavingRef.current) {
+      return;
+    }
+
+    const validation = validateSession(user, session);
+    if (!validation.isValid) {
+      console.warn(`Session validation failed: ${validation.reason}. Skipping preferences save.`);
       return;
     }
 
@@ -114,10 +122,23 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     }
 
     saveTimeoutRef.current = setTimeout(async () => {
+      if (isSavingRef.current) {
+        return;
+      }
+
+      const revalidation = validateSession(user, session);
+      if (!revalidation.isValid) {
+        console.warn(`Session validation failed before save: ${revalidation.reason}`);
+        return;
+      }
+
+      isSavingRef.current = true;
       try {
-        await updateUserPreferences(user.id, visibleColumns, undefined);
+        await updateUserPreferences(user.id, visibleColumns, { hideNSSIdentifier });
       } catch (error) {
-        console.error('Error saving column preferences:', error);
+        console.error('Error saving user preferences:', error);
+      } finally {
+        isSavingRef.current = false;
       }
     }, 500);
 
@@ -126,34 +147,12 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [visibleColumns, user, userId]);
-
-  useEffect(() => {
-    if (!user || userId !== user.id || isInitialLoadRef.current) {
-      return;
-    }
-
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    saveTimeoutRef.current = setTimeout(async () => {
-      try {
-        await updateUserPreferences(user.id, undefined, { hideNSSIdentifier });
-      } catch (error) {
-        console.error('Error saving privacy settings:', error);
-      }
-    }, 500);
-
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
-  }, [hideNSSIdentifier, user, userId]);
+  }, [visibleColumns, hideNSSIdentifier, user, session, userId]);
 
   const setApiKey = async (key: string) => {
-    if (!user) {
+    const validation = validateSession(user, session);
+    if (!validation.isValid) {
+      console.warn(`Cannot update API key: ${validation.reason}`);
       return;
     }
 
