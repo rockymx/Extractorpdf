@@ -52,21 +52,15 @@ export const PatientRecordsTable: React.FC<PatientRecordsTableProps> = ({ record
   return (
     <div className="my-8 bg-slate-800/50 rounded-xl shadow-lg overflow-hidden">
       <h3 className="text-xl font-bold text-slate-200 p-4 bg-slate-700/50">Registros de Pacientes</h3>
-      <div className="overflow-x-auto relative shadow-inner">
+      <div className="overflow-x-auto">
         <table className="w-full text-sm text-left text-slate-300">
           <thead className="text-xs text-slate-200 uppercase bg-slate-700">
             <tr>
-              {filteredHeaders.map((header, index) => {
-                const isSticky = index < 2;
-                const stickyClasses = isSticky
-                  ? `sticky ${index === 0 ? 'left-0' : 'left-[60px]'} z-20 bg-slate-700`
-                  : '';
-                return (
-                  <th key={header.key} scope="col" className={`px-4 py-3 ${stickyClasses}`}>
-                    {header.label}
-                  </th>
-                );
-              })}
+              {filteredHeaders.map((header) => (
+                <th key={header.key} scope="col" className="px-4 py-3">
+                  {header.label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -82,7 +76,7 @@ export const PatientRecordsTable: React.FC<PatientRecordsTableProps> = ({ record
                   }
                 `}
               >
-                {filteredHeaders.map((header, index) => {
+                {filteredHeaders.map((header) => {
                   let cellContent: React.ReactNode;
 
                   if (header.key === 'atencion') {
@@ -97,13 +91,8 @@ export const PatientRecordsTable: React.FC<PatientRecordsTableProps> = ({ record
                     cellContent = record[header.key as keyof PatientRecord];
                   }
 
-                  const isSticky = index < 2;
-                  const stickyClasses = isSticky
-                    ? `sticky ${index === 0 ? 'left-0' : 'left-[60px]'} z-10 ${selectedRowId === record.noProgresivo ? 'bg-sky-500/30' : index % 2 === 0 ? 'bg-slate-800' : 'bg-slate-700/50'}`
-                    : '';
-
                   return (
-                    <td key={`${record.noProgresivo}-${header.key}`} className={`px-4 py-3 whitespace-nowrap ${stickyClasses}`}>
+                    <td key={`${record.noProgresivo}-${header.key}`} className="px-4 py-3 whitespace-nowrap">
                       {cellContent}
                     </td>
                   );
