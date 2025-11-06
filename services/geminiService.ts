@@ -62,10 +62,10 @@ const responseSchema = {
           finAtencion: { type: Type.STRING, description: "Hora en que finalizó la atención." },
           primeraVez: { type: Type.STRING, description: "Indica si es la primera vez del paciente ('SI' o 'NO')." },
           diagnosticoPrincipal: { type: Type.STRING, description: "El texto descriptivo del diagnóstico principal que se encuentra junto a la etiqueta 'DIAGNÓSTICO PRINCIPAL'." },
-          numeroRecetas: { type: Type.STRING, description: "Número de recetas emitidas (columna 5)." },
+          numeroRecetas: { type: Type.STRING, description: "Número de recetas emitidas (columna 7)." },
           alta: { type: Type.STRING, description: "Si la columna 'ALTA' está marcada con 'X', el valor es 'X', si no, vacío." },
           diasIncapacidad: { type: Type.STRING, description: "Número de días de incapacidad otorgados." },
-          riesgoTrabajo: { type: Type.STRING, description: "Código del riesgo de trabajo." },
+          riesgoTrabajo: { type: Type.STRING, description: "Código del riesgo de trabajo (columna 9)." },
           paseOtraUnidad: { type: Type.STRING, description: "Si la columna 'PASE A OTRA UNIDAD' está marcada con 'X', el valor es 'X', si no, vacío." }
         },
         required: ["noProgresivo", "nombreDerechohabiente", "numeroSeguridadSocial", "agregadoMedico", "horaCita", "inicioAtencion", "finAtencion", "primeraVez", "diagnosticoPrincipal", "numeroRecetas", "alta", "diasIncapacidad", "riesgoTrabajo", "paseOtraUnidad"]
