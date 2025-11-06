@@ -1,13 +1,13 @@
 
 import type { PatientRecord } from '../types.ts';
-import { getDocument, GlobalWorkerOptions, version } from 'pdfjs-dist';
-import { utils, writeFile } from 'xlsx';
+import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
+import * as XLSX from 'xlsx';
 
 console.log('[DEBUG] fileUtils: Module loaded');
-console.log('[DEBUG] fileUtils: PDF.js version:', version);
+console.log('[DEBUG] fileUtils: PDF.js version:', pdfjsLib.version);
 
 // Configure PDF.js worker
-GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 console.log('[DEBUG] fileUtils: PDF.js worker configured');
 
 /**
@@ -17,7 +17,7 @@ console.log('[DEBUG] fileUtils: PDF.js worker configured');
  */
 export const extractTextFromPdf = async (file: File): Promise<string> => {
   const arrayBuffer = await file.arrayBuffer();
-  const pdf = await getDocument({ data: arrayBuffer }).promise;
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const numPages = pdf.numPages;
   let fullText = '';
 
@@ -79,9 +79,9 @@ export const exportToExcel = (data: any[], fileName: string) => {
         alert("No data to export.");
         return;
     }
-    const wb = utils.book_new();
+    const wb = XLSX.utils.book_new();
     const sheetName = 'Registros de Pacientes';
-    const ws = utils.json_to_sheet(data);
-    utils.book_append_sheet(wb, ws, sheetName);
-    writeFile(wb, fileName);
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, fileName);
 };
