@@ -4,6 +4,8 @@ import type { StoredExtraction } from '../types.ts';
 import { ReportDetailsView } from './ReportDetailsView.tsx';
 import { PatientRecordsTable } from './PatientRecordsTable.tsx';
 import { exportToExcel, formatAtencion } from '../utils/fileUtils.ts';
+import { generateHTMLReport, downloadHTMLReport } from '../utils/htmlExportUtils.ts';
+import { SettingsContext } from '../context/SettingsContext.tsx';
 import { ClockIcon } from './icons/ClockIcon.tsx';
 import { EyeIcon } from './icons/EyeIcon.tsx';
 import { TrashIcon } from './icons/TrashIcon.tsx';
@@ -24,6 +26,7 @@ interface HistoryScreenProps {
 
 export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) => {
   const { user } = useAuth();
+  const settings = React.useContext(SettingsContext);
   const [history, setHistory] = useState<ExtractionHistoryRecord[]>([]);
   const [selectedExtraction, setSelectedExtraction] = useState<ExtractionHistoryRecord | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -93,7 +96,7 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) 
     }
   };
   
-  const handleExport = () => {
+  const handleExportExcel = () => {
     if (selectedExtraction) {
         const { data, file_name } = selectedExtraction;
         const exportFileName = file_name.replace(/\.pdf$/i, '') + '_pacientes.xlsx';
@@ -112,6 +115,19 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) 
             'Riesgo Trab.': record.riesgoTrabajo,
         }));
         exportToExcel(dataForExport, exportFileName);
+    }
+  };
+
+  const handleExportHTML = () => {
+    if (selectedExtraction && settings) {
+      const { data, file_name, extraction_date } = selectedExtraction;
+      const htmlContent = generateHTMLReport(data, {
+        fileName: file_name,
+        extractionDate: new Date(extraction_date).toLocaleString(),
+        visibleColumns: settings.visibleColumns,
+        hideNSSIdentifier: settings.hideNSSIdentifier
+      });
+      downloadHTMLReport(htmlContent, file_name);
     }
   };
 
@@ -140,11 +156,18 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) 
                 Volver a la lista
             </button>
             <button
-                onClick={handleExport}
+                onClick={handleExportHTML}
+                className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+            >
+                <ArrowDownTrayIcon />
+                Exportar a HTML
+            </button>
+            <button
+                onClick={handleExportExcel}
                 className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg transition-colors"
             >
                 <ArrowDownTrayIcon />
-                Exportar Pacientes a Excel
+                Exportar a Excel
             </button>
         </div>
         <ReportDetailsView details={selectedExtraction.data.reportDetails} fileName={selectedExtraction.file_name} />

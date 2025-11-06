@@ -8,6 +8,7 @@ import { ReportDetailsView } from './components/ReportDetailsView.tsx';
 import { PatientRecordsTable } from './components/PatientRecordsTable.tsx';
 import { ArrowDownTrayIcon } from './components/icons/ArrowDownTrayIcon.tsx';
 import { extractTextFromPdf, exportToExcel, formatAtencion } from './utils/fileUtils.ts';
+import { generateHTMLReport, downloadHTMLReport } from './utils/htmlExportUtils.ts';
 import { extractDataWithGemini } from './services/geminiService.ts';
 import { getHistory, saveExtraction } from './utils/storageUtils.ts';
 import type { ExtractionResult, StoredExtraction } from './types.ts';
@@ -111,7 +112,15 @@ const AppContent: React.FC = () => {
   };
 
   const handleExportHTML = () => {
-    console.log('Exportar a HTML - Funcionalidad pendiente');
+    if (extractedData && pdfFile && settingsContext) {
+      const htmlContent = generateHTMLReport(extractedData, {
+        fileName: pdfFile.name,
+        extractionDate: new Date().toLocaleString(),
+        visibleColumns: settingsContext.visibleColumns,
+        hideNSSIdentifier: settingsContext.hideNSSIdentifier
+      });
+      downloadHTMLReport(htmlContent, pdfFile.name);
+    }
   };
   
   const navigateTo = (page: CurrentPage) => {
@@ -187,7 +196,7 @@ const AppContent: React.FC = () => {
                     </button>
                     <button
                         onClick={handleExportHTML}
-                        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                        className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-bold py-2 px-4 rounded-lg transition-colors"
                     >
                         <ArrowDownTrayIcon />
                         Exportar a HTML
