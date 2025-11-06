@@ -42,36 +42,30 @@ interface SettingsProviderProps {
 }
 
 export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) => {
-  console.log('[DEBUG] SettingsProvider: Initializing');
   const { user } = useAuth();
-  console.log('[DEBUG] SettingsProvider: User from auth:', user ? 'logged in' : 'not logged in');
   const [visibleColumns, setVisibleColumns] = useState<ColumnVisibility>(defaultVisibility);
   const [hideNSSIdentifier, setHideNSSIdentifier] = useState<boolean>(false);
   const [apiKey, setApiKeyState] = useState<string>('');
   const [isLoadingSettings, setIsLoadingSettings] = useState<boolean>(true);
-  const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadSettings = async () => {
-      console.log('[DEBUG] SettingsProvider: loadSettings called, user:', user ? 'present' : 'null');
       if (!user) {
-        console.log('[DEBUG] SettingsProvider: No user, skipping settings load');
         setIsLoadingSettings(false);
-        setSettingsLoaded(false);
+        setUserId(null);
         setApiKeyState('');
         return;
       }
 
-      if (settingsLoaded) {
-        console.log('[DEBUG] SettingsProvider: Settings already loaded');
+      if (userId === user.id) {
         return;
       }
 
-      console.log('[DEBUG] SettingsProvider: Loading user settings');
+      setUserId(user.id);
       setIsLoadingSettings(true);
       try {
         const settings = await getOrCreateUserSettings(user.id);
-        console.log('[DEBUG] SettingsProvider: Settings loaded:', settings ? 'success' : 'null');
         if (settings?.gemini_api_key) {
           setApiKeyState(settings.gemini_api_key);
         } else {
@@ -88,19 +82,15 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
         if (localHideNSS) {
           setHideNSSIdentifier(JSON.parse(localHideNSS));
         }
-
-        setSettingsLoaded(true);
-        console.log('[DEBUG] SettingsProvider: Settings loaded successfully');
       } catch (error) {
-        console.error('[DEBUG] SettingsProvider: Error loading settings:', error);
+        console.error('Error loading settings:', error);
       } finally {
         setIsLoadingSettings(false);
-        console.log('[DEBUG] SettingsProvider: Finished loading settings');
       }
     };
 
     loadSettings();
-  }, [user, settingsLoaded]);
+  }, [user, userId]);
 
   useEffect(() => {
     if (user) {

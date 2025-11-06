@@ -22,11 +22,8 @@ import { saveExtractionToHistory } from './services/extractionHistoryService.ts'
 export type CurrentPage = 'main' | 'config' | 'showData' | 'history' | 'login';
 
 const AppContent: React.FC = () => {
-  console.log('[DEBUG] AppContent: Component rendering');
   const { user, loading: authLoading } = useAuth();
-  console.log('[DEBUG] AppContent: Auth state - user:', user ? 'logged in' : 'not logged in', 'loading:', authLoading);
   const settingsContext = useContext(SettingsContext);
-  console.log('[DEBUG] AppContent: Settings context loaded:', settingsContext ? 'yes' : 'no');
   const [currentPage, setCurrentPage] = useState<CurrentPage>('main');
   const [workflow, setWorkflow] = useState<'excel' | 'database' | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -173,7 +170,6 @@ const AppContent: React.FC = () => {
   };
 
   if (authLoading) {
-    console.log('[DEBUG] AppContent: Showing auth loading spinner');
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <LoadingSpinner />
@@ -182,22 +178,16 @@ const AppContent: React.FC = () => {
   }
 
   if (!user) {
-    console.log('[DEBUG] AppContent: No user logged in, showing login screen');
     return <LoginScreen onNavigateBack={() => {}} />;
   }
 
-  console.log('[DEBUG] AppContent: User is logged in, rendering main app');
-
   if (settingsContext?.isLoadingSettings) {
-    console.log('[DEBUG] AppContent: Loading settings');
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <LoadingSpinner message="Cargando configuración..." />
       </div>
     );
   }
-
-  console.log('[DEBUG] AppContent: Rendering page:', currentPage);
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
