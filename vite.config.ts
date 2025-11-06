@@ -20,10 +20,14 @@ export default defineConfig(({ mode }) => {
         }
       },
       optimizeDeps: {
-        include: ['pdfjs-dist', 'xlsx'],
+        include: ['pdfjs-dist'],
+        exclude: ['pdfjs-dist'],
         esbuildOptions: {
           target: 'esnext'
         }
+      },
+      worker: {
+        format: 'es'
       }
     };
 });
