@@ -1,9 +1,10 @@
 
 import type { PatientRecord } from '../types.ts';
+import * as pdfjsLib from 'pdfjs-dist';
+import * as XLSX from 'xlsx';
 
-// These are global variables exposed by the scripts in index.html
-declare const pdfjsLib: any;
-declare const XLSX: any;
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 /**
  * Extracts all text content from a given PDF file.
