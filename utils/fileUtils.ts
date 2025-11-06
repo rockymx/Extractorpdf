@@ -1,6 +1,6 @@
 
 import type { PatientRecord } from '../types.ts';
-import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
+import * as pdfjsLib from 'pdfjs-dist';
 import * as XLSX from 'xlsx';
 
 console.log('[DEBUG] fileUtils: Module loaded');
