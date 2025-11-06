@@ -20,8 +20,7 @@ export default defineConfig(({ mode }) => {
         }
       },
       optimizeDeps: {
-        include: ['pdfjs-dist'],
-        exclude: ['pdfjs-dist'],
+        include: ['pdfjs-dist', 'xlsx'],
         esbuildOptions: {
           target: 'esnext'
         }
