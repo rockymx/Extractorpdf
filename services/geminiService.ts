@@ -121,11 +121,11 @@ export const extractDataWithGemini = async (pdfText: string, apiKey?: string): P
             - RAMIREZ ARISPE MARIA ISELA: text "SI" in column 1 → "SI" (the visible X is in column 3, not here)
             - CANEDO FLORES RAQUEL: text "SI" in column 1 → "SI"
         *   **diagnosticoPrincipal**: Locate the text labeled "DIAGNÓSTICO PRINCIPAL" within the patient's section. Extract the full text that follows this label. For patient #1, the value is "Gonartrosis, no especificada". For patient #3, the value is "Fractura de los huesos de otro(s) dedo(s) del pie".
-        *   **numeroRecetas**: The number from the "NÚMERO DE RECETAS" column (column 7 in the grid with many columns). For row 1, the value is '0'.
-        *   **alta**: Check the "ALTA" column. If it's marked (e.g., with an 'X'), the value is 'X'. Otherwise, an empty string. For patient #6, the value is 'X'.
-        *   **diasIncapacidad**: Extract the number from the "DÍAS DE INCAPACIDAD" column. For patient #6, the value is '1'. If empty, return an empty string.
-        *   **riesgoTrabajo**: Extract the number from the "RIESGO DE TRABAJO" column. For patient #6, the value is '1'. If empty, return an empty string.
-        *   **paseOtraUnidad**: Check the "PASE A OTRA UNIDAD" column. If it's marked, the value is 'X'. Otherwise, an empty string. For patient #6, this is empty.
+        *   **numeroRecetas**: The number from the "NÚMERO DE RECETAS" column (column 5 in the grid with many columns). For row 1, the value is '0'.
+        *   **alta**: Check the "ALTA" column (column 4 in the grid with many columns). If it's marked with an 'X', the value is 'X'. Otherwise, return an empty string.
+        *   **diasIncapacidad**: Extract the number from the "DÍAS DE INCAPACIDAD" column (column 6 in the grid with many columns). If empty, return an empty string.
+        *   **riesgoTrabajo**: Extract the number from the "RIESGO DE TRABAJO" column (column 9 in the grid with many columns). If empty, return an empty string.
+        *   **paseOtraUnidad**: Check the "PASE A OTRA UNIDAD" column (column 3 in the grid with many columns). If it's marked with an 'X', the value is 'X'. Otherwise, return an empty string.
 
 **Output Format:**
 The output MUST be a valid JSON object adhering strictly to the provided schema. Do not include any text or explanations outside the JSON object. All fields must be strings. If a value is not present, provide an empty string "".
