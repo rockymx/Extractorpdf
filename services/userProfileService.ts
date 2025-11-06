@@ -158,11 +158,16 @@ export const updateUserPreferences = async (
     .update(updateData)
     .eq('user_id', userId)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error updating user preferences:', error);
     return null;
+  }
+
+  if (!data) {
+    await getOrCreateUserSettings(userId);
+    return await updateUserPreferences(userId, columnPreferences, privacySettings);
   }
 
   return data;

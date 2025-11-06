@@ -48,6 +48,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   const [apiKey, setApiKeyState] = useState<string>('');
   const [isLoadingSettings, setIsLoadingSettings] = useState<boolean>(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const isInitialLoadRef = useRef<boolean>(true);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -57,6 +58,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
         setApiKeyState('');
         setVisibleColumns(defaultVisibility);
         setHideNSSIdentifier(false);
+        isInitialLoadRef.current = true;
         return;
       }
 
@@ -66,6 +68,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
 
       setUserId(user.id);
       setIsLoadingSettings(true);
+      isInitialLoadRef.current = true;
       try {
         const settings = await getOrCreateUserSettings(user.id);
 
@@ -90,6 +93,9 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
         console.error('Error loading settings:', error);
       } finally {
         setIsLoadingSettings(false);
+        setTimeout(() => {
+          isInitialLoadRef.current = false;
+        }, 100);
       }
     };
 
@@ -99,7 +105,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!user || userId !== user.id) {
+    if (!user || userId !== user.id || isInitialLoadRef.current) {
       return;
     }
 
@@ -123,7 +129,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   }, [visibleColumns, user, userId]);
 
   useEffect(() => {
-    if (!user || userId !== user.id) {
+    if (!user || userId !== user.id || isInitialLoadRef.current) {
       return;
     }
 
