@@ -52,31 +52,37 @@ export const PatientRecordsTable: React.FC<PatientRecordsTableProps> = ({ record
   return (
     <div className="my-8 bg-slate-800/50 rounded-xl shadow-lg overflow-hidden">
       <h3 className="text-xl font-bold text-slate-200 p-4 bg-slate-700/50">Registros de Pacientes</h3>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto relative shadow-inner">
         <table className="w-full text-sm text-left text-slate-300">
           <thead className="text-xs text-slate-200 uppercase bg-slate-700">
             <tr>
-              {filteredHeaders.map((header) => (
-                <th key={header.key} scope="col" className="px-6 py-3">
-                  {header.label}
-                </th>
-              ))}
+              {filteredHeaders.map((header, index) => {
+                const isSticky = index < 2;
+                const stickyClasses = isSticky
+                  ? `sticky ${index === 0 ? 'left-0' : 'left-[60px]'} z-20 bg-slate-700`
+                  : '';
+                return (
+                  <th key={header.key} scope="col" className={`px-4 py-3 ${stickyClasses}`}>
+                    {header.label}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
             {records.map((record) => (
-              <tr 
+              <tr
                 key={record.noProgresivo}
                 onClick={() => setSelectedRowId(prevId => (prevId === record.noProgresivo ? null : record.noProgresivo))}
                 className={`
                   border-b border-slate-700 cursor-pointer transition-colors duration-150
                   ${selectedRowId === record.noProgresivo
-                    ? 'bg-sky-500/30 hover:bg-sky-500/40' // Selected style
-                    : 'odd:bg-slate-800 even:bg-slate-700/50 hover:bg-slate-600/50' // Unselected style with zebra and hover
+                    ? 'bg-sky-500/30 hover:bg-sky-500/40'
+                    : 'odd:bg-slate-800 even:bg-slate-700/50 hover:bg-slate-600/50'
                   }
                 `}
               >
-                {filteredHeaders.map((header) => {
+                {filteredHeaders.map((header, index) => {
                   let cellContent: React.ReactNode;
 
                   if (header.key === 'atencion') {
@@ -90,9 +96,14 @@ export const PatientRecordsTable: React.FC<PatientRecordsTableProps> = ({ record
                   } else {
                     cellContent = record[header.key as keyof PatientRecord];
                   }
-                  
+
+                  const isSticky = index < 2;
+                  const stickyClasses = isSticky
+                    ? `sticky ${index === 0 ? 'left-0' : 'left-[60px]'} z-10 ${selectedRowId === record.noProgresivo ? 'bg-sky-500/30' : index % 2 === 0 ? 'bg-slate-800' : 'bg-slate-700/50'}`
+                    : '';
+
                   return (
-                    <td key={`${record.noProgresivo}-${header.key}`} className="px-6 py-4 whitespace-nowrap">
+                    <td key={`${record.noProgresivo}-${header.key}`} className={`px-4 py-3 whitespace-nowrap ${stickyClasses}`}>
                       {cellContent}
                     </td>
                   );

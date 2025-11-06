@@ -124,7 +124,7 @@ const AppContent: React.FC = () => {
     }
 
     return (
-      <div className="w-full max-w-7xl mx-auto px-2 py-8">
+      <div className="w-full max-w-[1600px] mx-auto px-4 py-8">
         {!pdfFile && (
           <>
             <div className="flex justify-between items-center mb-6">
