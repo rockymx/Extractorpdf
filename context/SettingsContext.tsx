@@ -42,7 +42,9 @@ interface SettingsProviderProps {
 }
 
 export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) => {
+  console.log('[DEBUG] SettingsProvider: Initializing');
   const { user } = useAuth();
+  console.log('[DEBUG] SettingsProvider: User from auth:', user ? 'logged in' : 'not logged in');
   const [visibleColumns, setVisibleColumns] = useState<ColumnVisibility>(defaultVisibility);
   const [hideNSSIdentifier, setHideNSSIdentifier] = useState<boolean>(false);
   const [apiKey, setApiKeyState] = useState<string>('');
@@ -51,7 +53,9 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
 
   useEffect(() => {
     const loadSettings = async () => {
+      console.log('[DEBUG] SettingsProvider: loadSettings called, user:', user ? 'present' : 'null');
       if (!user) {
+        console.log('[DEBUG] SettingsProvider: No user, skipping settings load');
         setIsLoadingSettings(false);
         setSettingsLoaded(false);
         setApiKeyState('');
@@ -59,12 +63,15 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
       }
 
       if (settingsLoaded) {
+        console.log('[DEBUG] SettingsProvider: Settings already loaded');
         return;
       }
 
+      console.log('[DEBUG] SettingsProvider: Loading user settings');
       setIsLoadingSettings(true);
       try {
         const settings = await getOrCreateUserSettings(user.id);
+        console.log('[DEBUG] SettingsProvider: Settings loaded:', settings ? 'success' : 'null');
         if (settings?.gemini_api_key) {
           setApiKeyState(settings.gemini_api_key);
         } else {
@@ -83,10 +90,12 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
         }
 
         setSettingsLoaded(true);
+        console.log('[DEBUG] SettingsProvider: Settings loaded successfully');
       } catch (error) {
-        console.error('Error loading settings:', error);
+        console.error('[DEBUG] SettingsProvider: Error loading settings:', error);
       } finally {
         setIsLoadingSettings(false);
+        console.log('[DEBUG] SettingsProvider: Finished loading settings');
       }
     };
 

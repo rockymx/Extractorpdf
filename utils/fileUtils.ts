@@ -3,8 +3,12 @@ import type { PatientRecord } from '../types.ts';
 import { getDocument, GlobalWorkerOptions, version } from 'pdfjs-dist';
 import { utils, writeFile } from 'xlsx';
 
+console.log('[DEBUG] fileUtils: Module loaded');
+console.log('[DEBUG] fileUtils: PDF.js version:', version);
+
 // Configure PDF.js worker
 GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js`;
+console.log('[DEBUG] fileUtils: PDF.js worker configured');
 
 /**
  * Extracts all text content from a given PDF file.

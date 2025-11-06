@@ -14,14 +14,20 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  console.log('[DEBUG] AuthProvider: Initializing');
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('[DEBUG] AuthProvider: Getting initial session');
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('[DEBUG] AuthProvider: Session retrieved:', session ? 'User logged in' : 'No active session');
       setSession(session);
       setUser(session?.user ?? null);
+      setLoading(false);
+    }).catch((error) => {
+      console.error('[DEBUG] AuthProvider: Error getting session:', error);
       setLoading(false);
     });
 
