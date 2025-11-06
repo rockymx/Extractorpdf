@@ -83,7 +83,15 @@ const AppContent: React.FC = () => {
   
   const handleExport = () => {
     if (extractedData?.patientRecords && pdfFile) {
-        const fileName = pdfFile.name.replace(/\.pdf$/i, '') + '_pacientes.xlsx';
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = String(now.getFullYear()).slice(-2);
+        const dateStr = `${day}${month}${year}`;
+
+        const baseFileName = pdfFile.name.replace(/\.pdf$/i, '');
+        const fileName = `${baseFileName}_${dateStr}.xlsx`;
+
         const dataForExport = extractedData.patientRecords.map(record => ({
             'No.': record.noProgresivo,
             'Nombre del Paciente': record.nombreDerechohabiente,
@@ -100,6 +108,10 @@ const AppContent: React.FC = () => {
         }));
         exportToExcel(dataForExport, fileName);
     }
+  };
+
+  const handleExportHTML = () => {
+    console.log('Exportar a HTML - Funcionalidad pendiente');
   };
   
   const navigateTo = (page: CurrentPage) => {
@@ -165,13 +177,20 @@ const AppContent: React.FC = () => {
         {extractedData && (
           <div className="mt-8">
             {workflow === 'excel' && (
-                <div className="flex justify-end mb-4">
+                <div className="flex justify-end gap-3 mb-4">
                     <button
                         onClick={handleExport}
                         className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg transition-colors"
                     >
                         <ArrowDownTrayIcon />
-                        Exportar Pacientes a Excel
+                        Exportar a Excel
+                    </button>
+                    <button
+                        onClick={handleExportHTML}
+                        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                    >
+                        <ArrowDownTrayIcon />
+                        Exportar a HTML
                     </button>
                 </div>
             )}
