@@ -185,4 +185,48 @@ npm install
 
 ---
 
+## Error 4: Remix/New Relic - Failed to load resource: net::ERR_BLOCKED_BY_CLIENT
+
+### Descripción del Error
+Errores en consola mostrando recursos bloqueados:
+```
+Failed to load resource: net::ERR_BLOCKED_BY_CLIENT
+od5094459393310z2.in.t.remix%2F10.19.0.i
+nr-spa-1.302.0.min.js
+```
+
+### Causa
+Estos recursos NO son parte de la aplicación. Son scripts de:
+- **Remix:** Framework de la plataforma de hosting
+- **New Relic:** Herramienta de monitoreo del servidor
+
+Estos scripts son inyectados por:
+1. La plataforma de hosting (Bolt/StackBlitz)
+2. Extensiones del navegador
+3. Herramientas de desarrollo
+
+Son bloqueados por extensiones de privacidad/seguridad del navegador.
+
+### Solución
+**NO requiere acción.** Estos errores son normales y NO afectan la funcionalidad de la aplicación:
+
+- ✅ Tu aplicación funciona correctamente
+- ✅ Todos tus recursos locales cargan bien
+- ✅ PDF.js, Tailwind, y otras dependencias están instaladas localmente
+- ❌ Scripts de terceros (hosting/monitoreo) son bloqueados
+
+### Cómo Verificar
+Si quieres confirmar que son externos:
+1. Revisa `index.html` - NO contiene estos scripts
+2. Revisa las importaciones de tu código - NO usan Remix ni New Relic
+3. Son inyectados por la plataforma o el navegador
+
+### Nota
+Si deseas eliminar estos errores de la consola, puedes:
+- Desactivar temporalmente extensiones del navegador
+- Agregar excepciones en el bloqueador de contenido
+- **Recomendado:** Simplemente ignorarlos, no afectan tu app
+
+---
+
 **Última actualización:** 2025-11-06
