@@ -1,10 +1,10 @@
 
 import type { PatientRecord } from '../types.ts';
-import * as pdfjsLib from 'pdfjs-dist';
-import * as XLSX from 'xlsx';
+import { getDocument, GlobalWorkerOptions, version } from 'pdfjs-dist';
+import { utils, writeFile } from 'xlsx';
 
 // Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js`;
 
 /**
  * Extracts all text content from a given PDF file.
@@ -13,7 +13,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs
  */
 export const extractTextFromPdf = async (file: File): Promise<string> => {
   const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pdf = await getDocument({ data: arrayBuffer }).promise;
   const numPages = pdf.numPages;
   let fullText = '';
 
@@ -75,9 +75,9 @@ export const exportToExcel = (data: any[], fileName: string) => {
         alert("No data to export.");
         return;
     }
-    const wb = XLSX.utils.book_new();
+    const wb = utils.book_new();
     const sheetName = 'Registros de Pacientes';
-    const ws = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, sheetName);
-    XLSX.writeFile(wb, fileName);
+    const ws = utils.json_to_sheet(data);
+    utils.book_append_sheet(wb, ws, sheetName);
+    writeFile(wb, fileName);
 };
