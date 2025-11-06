@@ -17,21 +17,21 @@ interface SettingsContextType {
   isLoadingSettings: boolean;
 }
 
-export const configurableColumns: { key: string; label: string }[] = [
+export const configurableColumns: { key: string; label: string; inDevelopment?: boolean }[] = [
     { key: 'diagnosticoPrincipal', label: 'Diagnóstico Principal' },
     { key: 'numeroSeguridadSocial', label: 'NSS' },
     { key: 'horaCita', label: 'Hora Cita' },
     { key: 'atencion', label: 'Inicio y Fin de Atencion' },
     { key: 'primeraVez', label: '1ra Vez' },
-    { key: 'numeroRecetas', label: 'Recetas' },
-    { key: 'diasIncapacidad', label: 'Días Incap.' },
-    { key: 'alta', label: 'Alta' },
-    { key: 'paseOtraUnidad', label: 'Pase Unidad' },
-    { key: 'riesgoTrabajo', label: 'Riesgo Trab.' },
+    { key: 'numeroRecetas', label: 'Recetas', inDevelopment: true },
+    { key: 'diasIncapacidad', label: 'Días Incap.', inDevelopment: true },
+    { key: 'alta', label: 'Alta', inDevelopment: true },
+    { key: 'paseOtraUnidad', label: 'Pase Unidad', inDevelopment: true },
+    { key: 'riesgoTrabajo', label: 'Riesgo Trab.', inDevelopment: true },
 ];
 
 const defaultVisibility: ColumnVisibility = configurableColumns.reduce((acc, col) => {
-    acc[col.key] = true;
+    acc[col.key] = !col.inDevelopment;
     return acc;
 }, {} as ColumnVisibility);
 
