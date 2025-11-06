@@ -125,19 +125,33 @@ const AppContent: React.FC = () => {
 
     return (
       <div className="w-full max-w-6xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-slate-300">
-                {pdfFile?.name ? `Resultados para: ${pdfFile.name}` : (workflow === 'excel' ? 'Exportar a Excel' : 'Base de datos en la App')}
-            </h2>
-            <button
+        {!pdfFile && (
+          <>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-slate-300">
+                {workflow === 'excel' ? 'Exportar a Excel' : 'Base de datos en la App'}
+              </h2>
+              <button
                 onClick={handleReset}
                 className="bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-            >
+              >
                 Empezar de nuevo
-            </button>
-        </div>
+              </button>
+            </div>
+            <FileUpload onFileSelect={handleFileProcess} />
+          </>
+        )}
 
-        {!pdfFile && <FileUpload onFileSelect={handleFileProcess} />}
+        {pdfFile && (
+          <div className="flex justify-end mb-6">
+            <button
+              onClick={handleReset}
+              className="bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+            >
+              Empezar de nuevo
+            </button>
+          </div>
+        )}
 
         {isLoading && <LoadingSpinner />}
         
@@ -161,7 +175,7 @@ const AppContent: React.FC = () => {
                     </button>
                 </div>
             )}
-            <ReportDetailsView details={extractedData.reportDetails} />
+            <ReportDetailsView details={extractedData.reportDetails} fileName={pdfFile?.name} />
             <PatientRecordsTable records={extractedData.patientRecords} />
           </div>
         )}

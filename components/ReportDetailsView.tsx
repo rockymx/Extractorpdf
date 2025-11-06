@@ -7,6 +7,7 @@ import { BuildingLibraryIcon } from './icons/BuildingLibraryIcon.tsx';
 
 interface ReportDetailsViewProps {
   details: ReportDetails;
+  fileName?: string;
 }
 
 const DetailItem: React.FC<{ label: string; value: string; children?: React.ReactNode }> = ({ label, value, children }) => (
@@ -19,11 +20,11 @@ const DetailItem: React.FC<{ label: string; value: string; children?: React.Reac
   </div>
 );
 
-export const ReportDetailsView: React.FC<ReportDetailsViewProps> = ({ details }) => {
+export const ReportDetailsView: React.FC<ReportDetailsViewProps> = ({ details, fileName }) => {
   return (
     <div className="bg-slate-800/50 p-6 rounded-xl shadow-lg mb-8">
       <h3 className="text-2xl font-bold text-slate-200 mb-6 border-b border-slate-700 pb-3">
-        Detalles del Reporte
+        {fileName ? `Documento: ${fileName}` : 'Detalles del Reporte'}
       </h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         <DetailItem label="Nombre del Médico" value={details.nombreMedico}>

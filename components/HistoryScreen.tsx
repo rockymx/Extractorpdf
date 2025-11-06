@@ -132,18 +132,13 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) 
   if (selectedExtraction) {
     return (
       <div className="w-full max-w-6xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-slate-300">
-            Resultados para: {selectedExtraction.file_name}
-          </h2>
-          <button
-            onClick={() => setSelectedExtraction(null)}
-            className="bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-          >
-            Volver a la lista
-          </button>
-        </div>
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-end gap-3 mb-6">
+            <button
+                onClick={() => setSelectedExtraction(null)}
+                className="bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+            >
+                Volver a la lista
+            </button>
             <button
                 onClick={handleExport}
                 className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg transition-colors"
@@ -152,7 +147,7 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) 
                 Exportar Pacientes a Excel
             </button>
         </div>
-        <ReportDetailsView details={selectedExtraction.data.reportDetails} />
+        <ReportDetailsView details={selectedExtraction.data.reportDetails} fileName={selectedExtraction.file_name} />
         <PatientRecordsTable records={selectedExtraction.data.patientRecords} />
       </div>
     );
