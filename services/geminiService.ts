@@ -128,7 +128,7 @@ const responseSchema = {
 
           numeroRecetas: { type: Type.STRING, description: "Número de recetas emitidas (columna 7)." },
 
-          alta: { type: Type.STRING, description: "Si la columna 'ALTA' está marcada con 'X', el valor es 'X', si no, vacío." },
+          alta: { type: Type.STRING, description: "Estado de ALTA del paciente: 'SI' si está marcado con X en columna 5 bajo HORA CITA, 'NO' si está vacío." },
 
           diasIncapacidad: { type: Type.STRING, description: "Número de días de incapacidad otorgados." },
 
@@ -244,7 +244,37 @@ export const extractDataWithGemini = async (pdfText: string, apiKey?: string): P
 
         *   **numeroRecetas**: The number from the "NÚMERO DE RECETAS" column (column 5 in the grid with many columns). For row 1, the value is '0'.
 
-        *   **alta**: Check the "ALTA" column (column 4 in the grid with many columns). If it's marked with an 'X', the value is 'X'. Otherwise, return an empty string.
+        *   **alta**: Extract the ALTA status by following these exact steps:
+
+            PROCESS:
+
+            1. Locate the patient's full name in the "NOMBRE DEL DERECHOHABIENTE" row
+
+            2. Find the "HORA CITA" row directly above the patient's name
+
+            3. In that "HORA CITA" row, locate the sequential numbering: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+
+            4. Focus specifically on the column marked with number "5"
+
+            5. Examine the cell that is immediately BELOW number "5" in the same patient row
+
+            6. Evaluate the content of that cell:
+               - If it contains an "X" → return "SI"
+               - If it is empty (no content) → return "NO"
+
+            CRITICAL RULES:
+
+            - ONLY observe the column under number 5, ignore all other columns (1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12)
+
+            - The "X" mark or empty space must be in the SAME ROW as the patient name, under column 5 of HORA CITA
+
+            - Do NOT confuse with other columns or marks in the grid
+
+            OUTPUT:
+
+            - Return "SI" if marked with X in column 5
+
+            - Return "NO" if column 5 is empty
 
         *   **diasIncapacidad**: Extract the number from the "DÍAS DE INCAPACIDAD" column (column 6 in the grid with many columns). If empty, return an empty string.
 
