@@ -41,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
         <div>
             <a href="#" onClick={() => handleNavigate('main')} className="cursor-pointer">
               <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-emerald-400">
-                PDF Data Extractor Pro
+                Datos de mi Consulta
               </h1>
               <p className="text-slate-400">Extrae datos de tablas de tus PDFs con IA</p>
             </a>

@@ -25,7 +25,7 @@ const AppContent: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
   const settingsContext = useContext(SettingsContext);
   const [currentPage, setCurrentPage] = useState<CurrentPage>('main');
-  const [workflow, setWorkflow] = useState<'excel' | 'database' | null>(null);
+  const [workflow, setWorkflow] = useState<'excel' | 'database' | null>('database');
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [extractedData, setExtractedData] = useState<ExtractionResult | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -73,7 +73,7 @@ const AppContent: React.FC = () => {
   }, [user, settingsContext?.apiKey]);
 
   const handleReset = () => {
-    setWorkflow(null);
+    setWorkflow('database');
     setPdfFile(null);
     setExtractedData(null);
     setError(null);
