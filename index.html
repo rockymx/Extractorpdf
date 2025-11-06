@@ -6,31 +6,6 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PDF Data Extractor Pro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      // Early diagnostic logs
-      console.log('[DEBUG] HTML: Page loaded');
-      console.log('[DEBUG] HTML: User agent:', navigator.userAgent);
-      console.log('[DEBUG] HTML: Document ready state:', document.readyState);
-
-      window.addEventListener('DOMContentLoaded', () => {
-        console.log('[DEBUG] HTML: DOMContentLoaded event fired');
-      });
-
-      window.addEventListener('load', () => {
-        console.log('[DEBUG] HTML: Window load event fired');
-      });
-
-      // Catch any unhandled errors
-      window.addEventListener('error', (event) => {
-        console.error('[DEBUG] HTML: Unhandled error:', event.error);
-        console.error('[DEBUG] HTML: Error source:', event.filename, 'Line:', event.lineno);
-      });
-
-      window.addEventListener('unhandledrejection', (event) => {
-        console.error('[DEBUG] HTML: Unhandled promise rejection:', event.reason);
-      });
-    </script>
   </head>
   <body class="bg-slate-900 text-white">
     <div id="root"></div>
