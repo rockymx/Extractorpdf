@@ -1,7 +1,7 @@
 
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { useAuth } from './AuthContext';
-import { getOrCreateUserSettings, updateUserSettings, UserSettings } from '../services/userProfileService';
+import { getOrCreateUserSettings, updateUserSettings, updateUserPreferences, UserSettings } from '../services/userProfileService';
 
 export type ColumnVisibility = {
   [key: string]: boolean;
@@ -55,6 +55,8 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
         setIsLoadingSettings(false);
         setUserId(null);
         setApiKeyState('');
+        setVisibleColumns(defaultVisibility);
+        setHideNSSIdentifier(false);
         return;
       }
 
@@ -66,21 +68,23 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
       setIsLoadingSettings(true);
       try {
         const settings = await getOrCreateUserSettings(user.id);
+
         if (settings?.gemini_api_key) {
           setApiKeyState(settings.gemini_api_key);
         } else {
           setApiKeyState('');
         }
 
-        const localColumns = localStorage.getItem('pdfExtractorColumnSettings');
-        if (localColumns) {
-          const parsed = JSON.parse(localColumns);
-          setVisibleColumns({ ...defaultVisibility, ...parsed });
+        if (settings?.column_preferences) {
+          setVisibleColumns({ ...defaultVisibility, ...settings.column_preferences });
+        } else {
+          setVisibleColumns(defaultVisibility);
         }
 
-        const localHideNSS = localStorage.getItem('pdfExtractorHideNSSIdentifier');
-        if (localHideNSS) {
-          setHideNSSIdentifier(JSON.parse(localHideNSS));
+        if (settings?.privacy_settings) {
+          setHideNSSIdentifier(settings.privacy_settings.hideNSSIdentifier ?? false);
+        } else {
+          setHideNSSIdentifier(false);
         }
       } catch (error) {
         console.error('Error loading settings:', error);
@@ -92,17 +96,55 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     loadSettings();
   }, [user, userId]);
 
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem('pdfExtractorColumnSettings', JSON.stringify(visibleColumns));
-    }
-  }, [visibleColumns, user]);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('pdfExtractorHideNSSIdentifier', JSON.stringify(hideNSSIdentifier));
+    if (!user || userId !== user.id) {
+      return;
     }
-  }, [hideNSSIdentifier, user]);
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        await updateUserPreferences(user.id, visibleColumns, undefined);
+      } catch (error) {
+        console.error('Error saving column preferences:', error);
+      }
+    }, 500);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [visibleColumns, user, userId]);
+
+  useEffect(() => {
+    if (!user || userId !== user.id) {
+      return;
+    }
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        await updateUserPreferences(user.id, undefined, { hideNSSIdentifier });
+      } catch (error) {
+        console.error('Error saving privacy settings:', error);
+      }
+    }, 500);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [hideNSSIdentifier, user, userId]);
 
   const setApiKey = async (key: string) => {
     if (!user) {

@@ -9,10 +9,21 @@ export interface UserProfile {
   updated_at: string;
 }
 
+export interface ColumnPreferences {
+  [key: string]: boolean;
+}
+
+export interface PrivacySettings {
+  hideNSSIdentifier?: boolean;
+}
+
 export interface UserSettings {
   id: string;
   user_id: string;
   gemini_api_key: string | null;
+  column_preferences: ColumnPreferences | null;
+  privacy_settings: PrivacySettings | null;
+  theme_preference: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -121,6 +132,36 @@ export const updateUserSettings = async (userId: string, apiKey: string): Promis
 
   if (error) {
     console.error('Error updating user settings:', error);
+    return null;
+  }
+
+  return data;
+};
+
+export const updateUserPreferences = async (
+  userId: string,
+  columnPreferences?: ColumnPreferences,
+  privacySettings?: PrivacySettings
+): Promise<UserSettings | null> => {
+  const updateData: any = {};
+
+  if (columnPreferences !== undefined) {
+    updateData.column_preferences = columnPreferences;
+  }
+
+  if (privacySettings !== undefined) {
+    updateData.privacy_settings = privacySettings;
+  }
+
+  const { data, error } = await supabase
+    .from('user_settings')
+    .update(updateData)
+    .eq('user_id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating user preferences:', error);
     return null;
   }
 
