@@ -10,10 +10,7 @@ export interface AdminUser {
 
 export const adminService = {
   async getAllUsers(): Promise<AdminUser[]> {
-    const { data, error } = await supabase
-      .from('admin_users_view')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { data, error } = await supabase.rpc('get_all_users_admin');
 
     if (error) {
       console.error('Error fetching users:', error);
