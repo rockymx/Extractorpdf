@@ -11,7 +11,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { user, signOut } = useAuth();
+  const { user, signOut, isImpersonating, impersonatedUserEmail } = useAuth();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -60,7 +60,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
                 <div className="absolute right-0 mt-2 w-56 bg-slate-800 rounded-md shadow-lg py-1 z-20 border border-slate-700">
                     {user && (
                       <div className="px-4 py-2 text-xs text-slate-400 border-b border-slate-700">
-                        {user.email}
+                        {isImpersonating ? impersonatedUserEmail : user.email}
                       </div>
                     )}
                     <button

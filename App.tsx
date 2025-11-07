@@ -56,7 +56,12 @@ const AppContent: React.FC = () => {
       const data = await extractDataWithGemini(textContent, settingsContext.apiKey);
 
       if (user) {
-        await saveExtractionToHistory(user.id, file.name, data);
+        const effectiveUserId = isImpersonating
+          ? localStorage.getItem('impersonation_target_id') || user.id
+          : user.id;
+
+        console.log('[App] Saving extraction for user:', effectiveUserId, 'isImpersonating:', isImpersonating);
+        await saveExtractionToHistory(effectiveUserId, file.name, data);
       } else {
         const newExtraction: StoredExtraction = {
           id: new Date().toISOString(),
@@ -75,7 +80,7 @@ const AppContent: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user, settingsContext?.apiKey]);
+  }, [user, isImpersonating, settingsContext?.apiKey]);
 
   const handleReset = () => {
     setWorkflow('database');

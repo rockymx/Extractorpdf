@@ -25,7 +25,7 @@ interface HistoryScreenProps {
 }
 
 export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) => {
-  const { user } = useAuth();
+  const { user, isImpersonating } = useAuth();
   const settings = React.useContext(SettingsContext);
   const [history, setHistory] = useState<ExtractionHistoryRecord[]>([]);
   const [selectedExtraction, setSelectedExtraction] = useState<ExtractionHistoryRecord | null>(null);
@@ -47,8 +47,15 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) 
 
       setLoading(true);
       try {
-        await migrateLocalStorageToSupabase(user.id);
-        const data = await getExtractionHistory(user.id);
+        const effectiveUserId = isImpersonating
+          ? localStorage.getItem('impersonation_target_id') || user.id
+          : user.id;
+
+        console.log('[HistoryScreen] Loading history for user:', effectiveUserId, 'isImpersonating:', isImpersonating);
+
+        await migrateLocalStorageToSupabase(effectiveUserId);
+        const data = await getExtractionHistory(effectiveUserId);
+        console.log('[HistoryScreen] Loaded history items:', data.length);
         setHistory(data);
         setMigrated(true);
       } catch (error) {
@@ -59,7 +66,7 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) 
     };
 
     loadHistory();
-  }, [user, migrated]);
+  }, [user, migrated, isImpersonating]);
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('¿Estás seguro de que quieres eliminar esta entrada del historial?')) {
@@ -70,7 +77,10 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) 
     try {
       const success = await deleteExtractionFromHistory(id);
       if (success && user) {
-        const updatedHistory = await getExtractionHistory(user.id);
+        const effectiveUserId = isImpersonating
+          ? localStorage.getItem('impersonation_target_id') || user.id
+          : user.id;
+        const updatedHistory = await getExtractionHistory(effectiveUserId);
         setHistory(updatedHistory);
       }
     } catch (error) {
