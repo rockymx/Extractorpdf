@@ -20,6 +20,8 @@ import { LoginScreen } from './components/LoginScreen.tsx';
 import { AuthProvider, useAuth } from './context/AuthContext.tsx';
 import { saveExtractionToHistory } from './services/extractionHistoryService.ts';
 import { AdminDashboard } from './components/AdminDashboard.tsx';
+import { AccountDisabledAlert } from './components/AccountDisabledAlert.tsx';
+import { adminService } from './services/adminService.ts';
 
 export type CurrentPage = 'main' | 'config' | 'showData' | 'history' | 'login';
 
@@ -32,11 +34,20 @@ const AppContent: React.FC = () => {
   const [extractedData, setExtractedData] = useState<ExtractionResult | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAccountDisabled, setIsAccountDisabled] = useState<boolean>(false);
 
   const handleFileProcess = useCallback(async (file: File) => {
     if (!settingsContext?.apiKey || settingsContext.apiKey.trim() === '') {
       setError('Por favor, configura tu API Key de Gemini en la sección de Configuración.');
       return;
+    }
+
+    if (user) {
+      const isActive = await adminService.getUserStatus(user.id);
+      if (!isActive) {
+        setIsAccountDisabled(true);
+        return;
+      }
     }
 
     setPdfFile(file);
@@ -242,6 +253,7 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
+      {isAccountDisabled && <AccountDisabledAlert />}
       <Header onNavigate={navigateTo} />
       <main className="flex-grow flex flex-col items-center justify-center">
         {currentPage === 'main' && renderMainContent()}

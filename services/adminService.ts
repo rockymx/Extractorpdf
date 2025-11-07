@@ -6,6 +6,7 @@ export interface AdminUser {
   created_at: string;
   last_sign_in_at: string | null;
   role: 'admin' | 'user';
+  is_active: boolean;
 }
 
 export const adminService = {
@@ -23,6 +24,7 @@ export const adminService = {
       created_at: user.created_at,
       last_sign_in_at: user.last_sign_in_at,
       role: (user.role as 'admin' | 'user') || 'user',
+      is_active: user.is_active ?? true,
     }));
   },
 
@@ -51,5 +53,33 @@ export const adminService = {
       console.error('Error updating user role:', error);
       throw error;
     }
+  },
+
+  async toggleUserStatus(userId: string, currentStatus: boolean): Promise<void> {
+    const newStatus = !currentStatus;
+    const { error } = await supabase
+      .from('user_settings')
+      .update({ is_active: newStatus })
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error toggling user status:', error);
+      throw error;
+    }
+  },
+
+  async getUserStatus(userId: string): Promise<boolean> {
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('is_active')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching user status:', error);
+      return true;
+    }
+
+    return data?.is_active ?? true;
   },
 };

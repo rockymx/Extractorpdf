@@ -47,6 +47,22 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleToggleStatus = async (userId: string, currentStatus: boolean, email: string) => {
+    const action = currentStatus ? 'desactivar' : 'activar';
+
+    if (!confirm(`¿Seguro que deseas ${action} la cuenta de ${email}?`)) {
+      return;
+    }
+
+    try {
+      await adminService.toggleUserStatus(userId, currentStatus);
+      setUsers(users.map(u => u.id === userId ? { ...u, is_active: !currentStatus } : u));
+    } catch (err) {
+      alert('Error al actualizar el estado del usuario');
+      console.error(err);
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
   };
@@ -132,6 +148,9 @@ export const AdminDashboard: React.FC = () => {
                     Rol
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    Estado
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                     Fecha Registro
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
@@ -145,7 +164,7 @@ export const AdminDashboard: React.FC = () => {
               <tbody className="divide-y divide-gray-800">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                       {searchTerm ? 'No se encontraron usuarios' : 'No hay usuarios registrados'}
                     </td>
                   </tr>
@@ -166,6 +185,17 @@ export const AdminDashboard: React.FC = () => {
                           {user.role === 'admin' ? 'Administrador' : 'Usuario'}
                         </span>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            user.is_active
+                              ? 'bg-green-900/50 text-green-300'
+                              : 'bg-red-900/50 text-red-300'
+                          }`}
+                        >
+                          {user.is_active ? 'Activo' : 'Desactivado'}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                         {formatDate(user.created_at)}
                       </td>
@@ -174,14 +204,14 @@ export const AdminDashboard: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <button
-                          onClick={() => handleToggleRole(user.id, user.role, user.email)}
+                          onClick={() => handleToggleStatus(user.id, user.is_active, user.email)}
                           className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg transition-colors ${
-                            user.role === 'admin'
-                              ? 'bg-orange-600/20 text-orange-400 hover:bg-orange-600/30'
-                              : 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30'
+                            user.is_active
+                              ? 'bg-red-600/20 text-red-400 hover:bg-red-600/30'
+                              : 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
                           }`}
                         >
-                          {user.role === 'admin' ? 'Cambiar a Usuario' : 'Hacer Administrador'}
+                          {user.is_active ? 'Desactivar' : 'Activar'}
                         </button>
                       </td>
                     </tr>
@@ -195,9 +225,9 @@ export const AdminDashboard: React.FC = () => {
         <div className="mt-6 bg-blue-900/20 border border-blue-800 rounded-lg p-4">
           <h3 className="text-sm font-medium text-blue-400 mb-2">Información</h3>
           <ul className="text-sm text-gray-400 space-y-1">
-            <li>• Puedes promover usuarios a administradores o degradarlos a usuarios regulares</li>
+            <li>• Los usuarios desactivados no podrán usar la función de escaneo con IA</li>
             <li>• Los cambios se aplican inmediatamente</li>
-            <li>• Los usuarios deben cerrar sesión y volver a iniciar para ver los cambios reflejados</li>
+            <li>• Los usuarios desactivados verán un mensaje con información de contacto</li>
           </ul>
         </div>
       </main>
