@@ -32,42 +32,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [impersonatedUserEmail, setImpersonatedUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedAdminId = localStorage.getItem('impersonation_admin_id');
-    const storedTargetEmail = localStorage.getItem('impersonation_target_email');
+    const initAuth = async () => {
+      const storedAdminId = localStorage.getItem('impersonation_admin_id');
+      const storedTargetEmail = localStorage.getItem('impersonation_target_email');
+      const isCurrentlyImpersonating = !!(storedAdminId && storedTargetEmail);
 
-    if (storedAdminId && storedTargetEmail) {
-      setIsImpersonating(true);
-      setOriginalAdminId(storedAdminId);
-      setImpersonatedUserEmail(storedTargetEmail);
-    }
+      if (isCurrentlyImpersonating) {
+        console.log('[AuthContext] Impersonation detected:', storedTargetEmail);
+        setIsImpersonating(true);
+        setOriginalAdminId(storedAdminId);
+        setImpersonatedUserEmail(storedTargetEmail);
+      }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       setUser(session?.user ?? null);
+
       if (session?.user) {
-        if (isImpersonating) {
+        if (isCurrentlyImpersonating) {
+          console.log('[AuthContext] Setting role to user due to impersonation');
           setUserRole('user');
-          adminService.getUserStatus(session.user.id).then(setIsActive);
+          const status = await adminService.getUserStatus(session.user.id);
+          setIsActive(status);
         } else {
-          adminService.getUserRole(session.user.id).then(setUserRole);
-          adminService.getUserStatus(session.user.id).then(setIsActive);
+          const role = await adminService.getUserRole(session.user.id);
+          const status = await adminService.getUserStatus(session.user.id);
+          console.log('[AuthContext] Normal session, role:', role);
+          setUserRole(role);
+          setIsActive(status);
         }
       }
       setLoading(false);
-    }).catch(() => {
-      setLoading(false);
-    });
+    };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    initAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const storedAdminId = localStorage.getItem('impersonation_admin_id');
+      const storedTargetEmail = localStorage.getItem('impersonation_target_email');
+      const isCurrentlyImpersonating = !!(storedAdminId && storedTargetEmail);
+
       setSession(session);
       setUser(session?.user ?? null);
+
       if (session?.user) {
-        if (isImpersonating) {
+        if (isCurrentlyImpersonating) {
+          console.log('[AuthContext.onAuthStateChange] Impersonation active, setting role to user');
           setUserRole('user');
-          adminService.getUserStatus(session.user.id).then(setIsActive);
+          const status = await adminService.getUserStatus(session.user.id);
+          setIsActive(status);
         } else {
-          adminService.getUserRole(session.user.id).then(setUserRole);
-          adminService.getUserStatus(session.user.id).then(setIsActive);
+          const role = await adminService.getUserRole(session.user.id);
+          const status = await adminService.getUserStatus(session.user.id);
+          console.log('[AuthContext.onAuthStateChange] Normal session, role:', role);
+          setUserRole(role);
+          setIsActive(status);
         }
       } else {
         setUserRole(null);
@@ -76,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => subscription.unsubscribe();
-  }, [isImpersonating]);
+  }, []);
 
   const signUp = async (email: string, password: string) => {
     const { error } = await supabase.auth.signUp({
@@ -116,28 +135,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const storedAdminId = localStorage.getItem('impersonation_admin_id');
     const adminIdToStore = storedAdminId || user.id;
 
+    console.log('[impersonateUser] Starting impersonation:', {
+      adminId: adminIdToStore,
+      targetUserId,
+      targetEmail
+    });
+
     localStorage.setItem('impersonation_admin_id', adminIdToStore);
     localStorage.setItem('impersonation_target_id', targetUserId);
     localStorage.setItem('impersonation_target_email', targetEmail);
 
     await adminService.startImpersonation(adminIdToStore, targetUserId);
 
-    setOriginalAdminId(adminIdToStore);
-    setImpersonatedUserEmail(targetEmail);
-    setIsImpersonating(true);
-    setUserRole('user');
-
-    const { data: { session: targetSession }, error } = await supabase.auth.admin.getUserById(targetUserId);
-
-    if (error) {
-      console.error('Error al obtener sesión del usuario:', error);
-    }
+    console.log('[impersonateUser] Impersonation data saved to localStorage, reloading...');
 
     window.location.reload();
   };
 
   const stopImpersonation = async () => {
     const storedAdminId = localStorage.getItem('impersonation_admin_id');
+
+    console.log('[stopImpersonation] Ending impersonation for admin:', storedAdminId);
 
     if (storedAdminId) {
       await adminService.endImpersonation(storedAdminId);
@@ -147,9 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('impersonation_target_id');
     localStorage.removeItem('impersonation_target_email');
 
-    setIsImpersonating(false);
-    setOriginalAdminId(null);
-    setImpersonatedUserEmail(null);
+    console.log('[stopImpersonation] Impersonation data cleared, reloading...');
 
     window.location.reload();
   };
