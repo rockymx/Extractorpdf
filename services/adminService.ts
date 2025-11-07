@@ -38,6 +38,7 @@ export const adminService = {
   },
 
   async getUserRole(userId: string): Promise<'admin' | 'user'> {
+    console.log(`[adminService.getUserRole] Fetching role for user ${userId}`);
     const { data, error } = await supabase
       .from('user_settings')
       .select('role')
@@ -45,11 +46,14 @@ export const adminService = {
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching user role:', error);
+      console.error(`[adminService.getUserRole] Error fetching user role for ${userId}:`, error);
       return 'user';
     }
 
-    return (data?.role as 'admin' | 'user') || 'user';
+    console.log(`[adminService.getUserRole] User ${userId} role data:`, data);
+    const role = (data?.role as 'admin' | 'user') || 'user';
+    console.log(`[adminService.getUserRole] Returning role: ${role}`);
+    return role;
   },
 
   async updateUserRole(userId: string, newRole: 'admin' | 'user'): Promise<void> {
