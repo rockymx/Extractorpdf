@@ -18,13 +18,15 @@ export const AdminDashboard: React.FC = () => {
 
   const loadUsers = async () => {
     try {
+      console.log('[AdminDashboard.loadUsers] Loading users...');
       setLoading(true);
       setError(null);
       const allUsers = await adminService.getAllUsers();
+      console.log('[AdminDashboard.loadUsers] Users loaded:', allUsers);
       setUsers(allUsers);
     } catch (err) {
+      console.error('[AdminDashboard.loadUsers] Error loading users:', err);
       setError('Error al cargar usuarios');
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -55,11 +57,26 @@ export const AdminDashboard: React.FC = () => {
     }
 
     try {
+      console.log(`[AdminDashboard.handleToggleStatus] Toggling status for ${email} (${userId}): ${currentStatus} -> ${!currentStatus}`);
       await adminService.toggleUserStatus(userId, currentStatus);
-      setUsers(users.map(u => u.id === userId ? { ...u, is_active: !currentStatus } : u));
+
+      const updatedUsers = users.map(u => {
+        if (u.id === userId) {
+          const updated = { ...u, is_active: !currentStatus };
+          console.log(`[AdminDashboard.handleToggleStatus] Updated user in state:`, updated);
+          return updated;
+        }
+        return u;
+      });
+
+      setUsers(updatedUsers);
+      console.log('[AdminDashboard.handleToggleStatus] All users after update:', updatedUsers);
+
+      await loadUsers();
+      console.log('[AdminDashboard.handleToggleStatus] Reloaded users from database');
     } catch (err) {
+      console.error('[AdminDashboard.handleToggleStatus] Error updating status:', err);
       alert('Error al actualizar el estado del usuario');
-      console.error(err);
     }
   };
 
