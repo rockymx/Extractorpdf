@@ -27,7 +27,7 @@ import { ImpersonationBanner } from './components/ImpersonationBanner.tsx';
 export type CurrentPage = 'main' | 'config' | 'showData' | 'history' | 'login';
 
 const AppContent: React.FC = () => {
-  const { user, loading: authLoading, userRole, isActive } = useAuth();
+  const { user, loading: authLoading, userRole, isActive, isImpersonating } = useAuth();
   const settingsContext = useContext(SettingsContext);
   const [currentPage, setCurrentPage] = useState<CurrentPage>('main');
   const [workflow, setWorkflow] = useState<'excel' | 'database' | null>('database');
@@ -231,7 +231,7 @@ const AppContent: React.FC = () => {
     return <LoginScreen onNavigateBack={() => {}} />;
   }
 
-  if (userRole === 'admin') {
+  if (userRole === 'admin' && !isImpersonating) {
     return <AdminDashboard />;
   }
 
