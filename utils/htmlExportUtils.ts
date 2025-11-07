@@ -14,7 +14,7 @@ const columnDefinitions: { key: keyof PatientRecord | 'atencion'; label: string;
   { key: 'diagnosticoPrincipal', label: 'Diagnóstico Principal' },
   { key: 'numeroSeguridadSocial', label: 'NSS' },
   { key: 'horaCita', label: 'Hora Cita' },
-  { key: 'atencion', label: 'Inicio y Fin de Atención' },
+  { key: 'atencion', label: 'Inicio y Fin de Atencion' },
   { key: 'primeraVez', label: '1ra Vez' },
   { key: 'numeroRecetas', label: 'Recetas' },
   { key: 'diasIncapacidad', label: 'Días Incap.' },
@@ -50,130 +50,37 @@ function getCellContent(
   return record[key as keyof PatientRecord] || '';
 }
 
-function generateReportDetailsSection(details: ReportDetails, consultationHours: string): string {
-  return `
-    <div class="report-details">
-      <h2>Detalles del Reporte</h2>
-      <div class="details-grid">
-        <div class="detail-item">
-          <span class="detail-label">Médico:</span>
-          <span class="detail-value">${details.nombreMedico || 'N/A'}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Fecha:</span>
-          <span class="detail-value">${details.fecha || 'N/A'}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Titular:</span>
-          <span class="detail-value">${details.titular || 'N/A'}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Unidad Médica:</span>
-          <span class="detail-value">${details.unidadMedica || 'N/A'}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Consultorio:</span>
-          <span class="detail-value">${details.consultorio || 'N/A'}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Turno:</span>
-          <span class="detail-value">${details.turno || 'N/A'}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Horas de Consulta:</span>
-          <span class="detail-value">${consultationHours}</span>
-        </div>
-      </div>
-    </div>
-  `;
-}
+const userIconSVG = `<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
 
-function generateStatisticsSection(records: PatientRecord[]): string {
-  const totalPatients = records.length;
-  const primeraVezCount = records.filter(r => r.primeraVez && r.primeraVez.toLowerCase() === 'si').length;
-  const recetasCount = records.reduce((sum, r) => {
-    const num = parseInt(r.numeroRecetas || '0');
-    return sum + (isNaN(num) ? 0 : num);
-  }, 0);
-  const incapacidadesCount = records.filter(r => r.diasIncapacidad && parseInt(r.diasIncapacidad) > 0).length;
+const buildingIconSVG = `<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>`;
 
-  return `
-    <div class="statistics">
-      <h2>Resumen Estadístico</h2>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-value">${totalPatients}</div>
-          <div class="stat-label">Total de Pacientes</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">${primeraVezCount}</div>
-          <div class="stat-label">Primera Vez</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">${recetasCount}</div>
-          <div class="stat-label">Total Recetas</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">${incapacidadesCount}</div>
-          <div class="stat-label">Incapacidades</div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function generatePatientTable(
-  records: PatientRecord[],
-  visibleColumns: Record<string, boolean>,
-  hideNSSIdentifier: boolean
-): string {
-  const filteredColumns = columnDefinitions.filter(col =>
-    col.mandatory || visibleColumns[col.key]
-  );
-
-  const headerRow = filteredColumns.map(col =>
-    `<th>${col.label}</th>`
-  ).join('');
-
-  const dataRows = records.map((record, index) => {
-    const cells = filteredColumns.map(col => {
-      const content = getCellContent(record, col.key, hideNSSIdentifier);
-      return `<td>${content}</td>`;
-    }).join('');
-
-    const rowClass = index % 2 === 0 ? 'even' : 'odd';
-    return `<tr class="${rowClass}">${cells}</tr>`;
-  }).join('');
-
-  return `
-    <div class="table-container">
-      <h2>Registros de Pacientes</h2>
-      <table>
-        <thead>
-          <tr>${headerRow}</tr>
-        </thead>
-        <tbody>
-          ${dataRows}
-        </tbody>
-      </table>
-    </div>
-  `;
-}
+const clockIconSVG = `<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
 
 export function generateHTMLReport(
   data: ExtractionResult,
   options: ExportOptions
 ): string {
   const { fileName, extractionDate, visibleColumns, hideNSSIdentifier } = options;
-  const currentDate = new Date().toLocaleString('es-MX', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-
+  const details = data.reportDetails;
   const consultationHours = calculateConsultationHours(data.patientRecords);
+
+  const filteredColumns = columnDefinitions.filter(col =>
+    col.mandatory || visibleColumns[col.key]
+  );
+
+  const tableHeaders = filteredColumns.map(col =>
+    `<th scope="col">${col.label}</th>`
+  ).join('');
+
+  const tableRows = data.patientRecords.map((record, index) => {
+    const cells = filteredColumns.map(col => {
+      const content = getCellContent(record, col.key, hideNSSIdentifier);
+      return `<td>${content}</td>`;
+    }).join('');
+
+    const rowClass = index % 2 === 0 ? 'row-odd' : 'row-even';
+    return `<tr class="${rowClass}">${cells}</tr>`;
+  }).join('');
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -190,273 +97,286 @@ export function generateHTMLReport(
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      background-color: #0f172a;
       color: #e2e8f0;
       padding: 20px;
       line-height: 1.6;
     }
 
     .container {
-      max-width: 1400px;
+      max-width: 1600px;
       margin: 0 auto;
-      background: #1e293b;
+      padding: 0 16px;
+    }
+
+    .report-header {
+      background-color: rgba(30, 41, 59, 0.5);
+      padding: 16px;
       border-radius: 12px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-      overflow: hidden;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      margin-bottom: 24px;
     }
 
-    header {
-      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-      padding: 30px;
-      text-align: center;
-      color: white;
-    }
-
-    header h1 {
-      font-size: 2em;
-      margin-bottom: 10px;
-      font-weight: 700;
-    }
-
-    .header-info {
+    .header-top {
       display: flex;
-      justify-content: center;
-      gap: 30px;
-      margin-top: 15px;
-      flex-wrap: wrap;
-    }
-
-    .header-info-item {
-      display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 8px;
-      font-size: 0.95em;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #334155;
     }
 
-    .content {
-      padding: 30px;
+    .header-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #cbd5e1;
     }
 
-    h2 {
-      color: #0ea5e9;
-      font-size: 1.5em;
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid #334155;
+    .header-date {
+      font-size: 14px;
+      font-weight: 600;
+      color: #cbd5e1;
     }
 
-    .report-details {
-      background: #334155;
-      padding: 25px;
-      border-radius: 8px;
-      margin-bottom: 30px;
-    }
-
-    .details-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 15px;
-      margin-top: 15px;
+    .details-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 16px;
     }
 
     .detail-item {
       display: flex;
-      gap: 10px;
-      padding: 10px;
-      background: #1e293b;
-      border-radius: 6px;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon {
+      width: 24px;
+      height: 24px;
+      color: #38bdf8;
+      flex-shrink: 0;
+    }
+
+    .detail-content {
+      display: flex;
+      flex-direction: column;
     }
 
     .detail-label {
-      font-weight: 600;
+      font-size: 12px;
+      font-weight: 500;
       color: #94a3b8;
-      min-width: 120px;
     }
 
     .detail-value {
-      color: #e2e8f0;
-      font-weight: 500;
+      font-size: 14px;
+      font-weight: 600;
+      color: #f1f5f9;
     }
 
-    .statistics {
-      background: #334155;
-      padding: 25px;
-      border-radius: 8px;
-      margin-bottom: 30px;
+    .badge-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
 
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin-top: 15px;
-    }
-
-    .stat-card {
-      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-      padding: 20px;
-      border-radius: 8px;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
-    }
-
-    .stat-value {
-      font-size: 2.5em;
+    .badge-icon {
+      font-size: 20px;
       font-weight: 700;
-      color: white;
-      margin-bottom: 5px;
+      color: #38bdf8;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
 
-    .stat-label {
-      font-size: 0.9em;
-      color: rgba(255, 255, 255, 0.9);
-      font-weight: 500;
+    .badge-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #38bdf8;
     }
 
-    .table-container {
-      margin-bottom: 30px;
+    .table-section {
+      margin: 32px 0;
+      background-color: rgba(30, 41, 59, 0.5);
+      border-radius: 12px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .table-header {
+      font-size: 20px;
+      font-weight: 700;
+      color: #cbd5e1;
+      padding: 16px;
+      background-color: rgba(51, 65, 85, 0.5);
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      background: #334155;
-      border-radius: 8px;
-      overflow: hidden;
-      margin-top: 15px;
+      font-size: 14px;
+      text-align: left;
+      color: #cbd5e1;
     }
 
     thead {
-      background: #0ea5e9;
+      font-size: 12px;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      background-color: #334155;
     }
 
     thead th {
-      padding: 15px;
-      text-align: left;
+      padding: 12px 16px;
       font-weight: 600;
-      color: white;
-      font-size: 0.85em;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
 
-    tbody tr.even {
-      background: #334155;
+    tbody tr {
+      border-bottom: 1px solid #334155;
+      cursor: pointer;
+      transition: background-color 150ms;
     }
 
-    tbody tr.odd {
-      background: #2d3b4e;
+    tbody tr.row-odd {
+      background-color: #1e293b;
+    }
+
+    tbody tr.row-even {
+      background-color: rgba(51, 65, 85, 0.5);
     }
 
     tbody tr:hover {
-      background: #3e4f66;
+      background-color: rgba(51, 65, 85, 0.5);
     }
 
     tbody td {
-      padding: 12px 15px;
-      color: #e2e8f0;
-      border-bottom: 1px solid #1e293b;
-      font-size: 0.9em;
+      padding: 12px 16px;
+      white-space: nowrap;
     }
 
-    footer {
-      background: #0f172a;
-      padding: 20px 30px;
-      text-align: center;
-      color: #94a3b8;
-      font-size: 0.9em;
-      border-top: 2px solid #334155;
-    }
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
 
-    .footer-info {
-      margin-top: 10px;
-      display: flex;
-      justify-content: center;
-      gap: 30px;
-      flex-wrap: wrap;
+      .container {
+        padding: 0 8px;
+      }
+
+      .report-header {
+        padding: 12px;
+      }
+
+      .header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .details-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .table-header {
+        font-size: 18px;
+        padding: 12px;
+      }
+
+      table {
+        font-size: 12px;
+      }
+
+      thead th,
+      tbody td {
+        padding: 8px 12px;
+      }
     }
 
     @media print {
       body {
-        background: white;
+        background-color: white;
+        color: black;
         padding: 0;
       }
 
-      .container {
+      .report-header,
+      .table-section {
         box-shadow: none;
       }
 
-      header {
-        background: #0ea5e9;
-        print-color-adjust: exact;
-        -webkit-print-color-adjust: exact;
-      }
-
-      .stat-card {
-        print-color-adjust: exact;
-        -webkit-print-color-adjust: exact;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .container {
-        border-radius: 0;
-      }
-
-      .content {
-        padding: 20px;
-      }
-
-      .details-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      table {
-        font-size: 0.85em;
-      }
-
-      thead th, tbody td {
-        padding: 10px 8px;
+      tbody tr:hover {
+        background-color: inherit;
       }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>📋 Reporte de Extracción de Datos Médicos</h1>
-      <div class="header-info">
-        <div class="header-info-item">
-          <span>📄</span>
-          <span><strong>Archivo:</strong> ${fileName}</span>
+    <div class="report-header">
+      <div class="header-top">
+        <h3 class="header-title">Documento: ${fileName}</h3>
+        <span class="header-date">${details.fecha || extractionDate}</span>
+      </div>
+      <div class="details-row">
+        <div class="detail-item">
+          ${userIconSVG}
+          <div class="detail-content">
+            <p class="detail-label">Nombre del Médico</p>
+            <p class="detail-value">${details.nombreMedico || '-'}</p>
+          </div>
         </div>
-        <div class="header-info-item">
-          <span>📅</span>
-          <span><strong>Fecha de Extracción:</strong> ${extractionDate}</span>
+        <div class="detail-item">
+          ${buildingIconSVG}
+          <div class="detail-content">
+            <p class="detail-label">Unidad Médica</p>
+            <p class="detail-value">${details.unidadMedica || '-'}</p>
+          </div>
+        </div>
+        <div class="detail-item">
+          <div class="badge-icon">#</div>
+          <div class="detail-content">
+            <p class="detail-label">Matrícula Titular</p>
+            <p class="detail-value">${details.titular || '-'}</p>
+          </div>
+        </div>
+        <div class="badge-item">
+          <span class="badge-value">${details.turno || '-'}</span>
+        </div>
+        <div class="detail-item">
+          ${clockIconSVG}
+          <div class="detail-content">
+            <p class="detail-label">Horas de Consulta</p>
+            <p class="detail-value">${consultationHours}</p>
+          </div>
         </div>
       </div>
-    </header>
-
-    <div class="content">
-      ${generateReportDetailsSection(data.reportDetails, consultationHours)}
-      ${generateStatisticsSection(data.patientRecords)}
-      ${generatePatientTable(data.patientRecords, visibleColumns, hideNSSIdentifier)}
     </div>
 
-    <footer>
-      <strong>PDF Data Extractor Pro</strong>
-      <div class="footer-info">
-        <span>Generado: ${currentDate}</span>
-        <span>Total de registros: ${data.patientRecords.length}</span>
+    <div class="table-section">
+      <h3 class="table-header">Registros de Pacientes</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              ${tableHeaders}
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
       </div>
-      <p style="margin-top: 10px; font-size: 0.85em;">
-        Este reporte fue generado automáticamente. Por favor, verifique la precisión de los datos.
-      </p>
-    </footer>
+    </div>
   </div>
 </body>
 </html>`;
