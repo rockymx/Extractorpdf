@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useContext } from 'react';
-import { SettingsContext, configurableColumns } from '../context/SettingsContext';
+import { SettingsContext } from '../context/SettingsContext';
 
 interface ConfigurationScreenProps {
   onNavigateBack: () => void;
@@ -129,69 +129,6 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({ onNavi
           <p className="text-slate-400 text-sm">
             Tu API key se guarda de forma segura en Supabase y está vinculada a tu cuenta. Solo tú puedes acceder a ella y nunca se envía a ningún servidor excepto a Google Gemini para procesar tus PDFs.
           </p>
-        </div>
-
-        <div className="border-t border-slate-700 pt-6">
-          <h3 className="text-xl font-semibold text-slate-200 mb-4">Columnas Visibles</h3>
-          <p className="text-slate-400 text-sm mb-4">
-            Selecciona qué columnas deseas ver en la tabla de pacientes
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {configurableColumns.map((col) => (
-              <div key={col.key} className="relative group">
-                <label className={`flex items-center gap-3 p-3 rounded-lg border border-slate-700 bg-slate-700/30 hover:bg-slate-700/50 transition-colors ${col.inDevelopment ? 'opacity-60' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={settingsContext?.visibleColumns[col.key] || false}
-                    onChange={(e) => {
-                      if (settingsContext) {
-                        settingsContext.setVisibleColumns(prev => ({
-                          ...prev,
-                          [col.key]: e.target.checked
-                        }));
-                      }
-                    }}
-                    disabled={col.inDevelopment}
-                    className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500 focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                  <span className="text-slate-200">{col.label}</span>
-                  {col.inDevelopment && (
-                    <span className="ml-auto text-xs text-amber-400">⚠️ En desarrollo</span>
-                  )}
-                </label>
-                {col.inDevelopment && (
-                  <div className="absolute hidden group-hover:block bottom-full left-0 mb-2 w-64 p-3 bg-slate-900 border border-amber-500/50 rounded-lg shadow-xl z-10">
-                    <p className="text-sm text-amber-300">
-                      ⚠️ Esta columna está en desarrollo. La extracción de datos para este campo aún no está optimizada y puede contener errores.
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="border-t border-slate-700 pt-6">
-          <h3 className="text-xl font-semibold text-slate-200 mb-4">Privacidad NSS</h3>
-          <label className="flex items-center gap-3 p-3 rounded-lg border border-slate-700 bg-slate-700/30 hover:bg-slate-700/50 transition-colors cursor-pointer">
-            <input
-              type="checkbox"
-              checked={settingsContext?.hideNSSIdentifier || false}
-              onChange={(e) => {
-                if (settingsContext) {
-                  settingsContext.setHideNSSIdentifier(e.target.checked);
-                }
-              }}
-              className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500 focus:ring-2"
-            />
-            <div>
-              <span className="text-slate-200">Ocultar últimos dígitos del NSS</span>
-              <p className="text-slate-400 text-sm mt-1">
-                Muestra solo los primeros 10 dígitos del Número de Seguridad Social para mayor privacidad
-              </p>
-            </div>
-          </label>
         </div>
       </div>
     </div>
