@@ -24,7 +24,7 @@ export const adminService = {
       created_at: user.created_at,
       last_sign_in_at: user.last_sign_in_at,
       role: (user.role as 'admin' | 'user') || 'user',
-      is_active: user.is_active ?? true,
+      is_active: user.is_active !== undefined ? user.is_active : true,
     }));
   },
 
