@@ -30,16 +30,19 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleDeleteUser = async (userId: string, email: string) => {
-    if (!confirm(`¿Seguro que deseas eliminar al usuario ${email}?`)) {
+  const handleToggleRole = async (userId: string, currentRole: 'admin' | 'user', email: string) => {
+    const newRole = currentRole === 'admin' ? 'user' : 'admin';
+    const action = newRole === 'admin' ? 'promover a administrador' : 'cambiar a usuario regular';
+
+    if (!confirm(`¿Seguro que deseas ${action} a ${email}?`)) {
       return;
     }
 
     try {
-      await adminService.deleteUser(userId);
-      setUsers(users.filter(u => u.id !== userId));
+      await adminService.updateUserRole(userId, newRole);
+      setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
     } catch (err) {
-      alert('Error al eliminar usuario');
+      alert('Error al actualizar el rol del usuario');
       console.error(err);
     }
   };
@@ -171,17 +174,14 @@ export const AdminDashboard: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <button
-                          onClick={() => handleDeleteUser(user.id, user.email)}
-                          disabled={user.role === 'admin'}
+                          onClick={() => handleToggleRole(user.id, user.role, user.email)}
                           className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg transition-colors ${
                             user.role === 'admin'
-                              ? 'bg-gray-800 text-gray-600 cursor-not-allowed'
-                              : 'bg-red-600/20 text-red-400 hover:bg-red-600/30'
+                              ? 'bg-orange-600/20 text-orange-400 hover:bg-orange-600/30'
+                              : 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30'
                           }`}
-                          title={user.role === 'admin' ? 'No se puede eliminar un administrador' : 'Eliminar usuario'}
                         >
-                          <TrashIcon className="w-4 h-4" />
-                          Eliminar
+                          {user.role === 'admin' ? 'Cambiar a Usuario' : 'Hacer Administrador'}
                         </button>
                       </td>
                     </tr>
@@ -195,14 +195,10 @@ export const AdminDashboard: React.FC = () => {
         <div className="mt-6 bg-blue-900/20 border border-blue-800 rounded-lg p-4">
           <h3 className="text-sm font-medium text-blue-400 mb-2">Información</h3>
           <ul className="text-sm text-gray-400 space-y-1">
-            <li>• Los administradores no pueden ser eliminados desde esta interfaz</li>
-            <li>• Para crear un administrador, ejecuta el siguiente comando SQL en Supabase:</li>
+            <li>• Puedes promover usuarios a administradores o degradarlos a usuarios regulares</li>
+            <li>• Los cambios se aplican inmediatamente</li>
+            <li>• Los usuarios deben cerrar sesión y volver a iniciar para ver los cambios reflejados</li>
           </ul>
-          <pre className="mt-2 p-3 bg-gray-900 rounded border border-gray-800 text-xs text-gray-300 overflow-x-auto">
-{`UPDATE user_settings
-SET role = 'admin'
-WHERE user_id = 'TU_USER_ID_AQUI';`}
-          </pre>
         </div>
       </main>
     </div>

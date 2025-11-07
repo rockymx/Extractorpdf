@@ -10,34 +10,22 @@ export interface AdminUser {
 
 export const adminService = {
   async getAllUsers(): Promise<AdminUser[]> {
-    const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+    const { data, error } = await supabase
+      .from('admin_users_view')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    if (authError) {
-      console.error('Error fetching auth users:', authError);
-      throw authError;
+    if (error) {
+      console.error('Error fetching users:', error);
+      throw error;
     }
 
-    const userIds = authUsers.users.map(u => u.id);
-
-    const { data: settings, error: settingsError } = await supabase
-      .from('user_settings')
-      .select('user_id, role')
-      .in('user_id', userIds);
-
-    if (settingsError) {
-      console.error('Error fetching user settings:', settingsError);
-    }
-
-    const settingsMap = new Map(
-      settings?.map(s => [s.user_id, s.role as 'admin' | 'user']) || []
-    );
-
-    return authUsers.users.map(user => ({
+    return (data || []).map(user => ({
       id: user.id,
       email: user.email || 'No email',
       created_at: user.created_at,
-      last_sign_in_at: user.last_sign_in_at || null,
-      role: settingsMap.get(user.id) || 'user',
+      last_sign_in_at: user.last_sign_in_at,
+      role: (user.role as 'admin' | 'user') || 'user',
     }));
   },
 
@@ -56,11 +44,14 @@ export const adminService = {
     return (data?.role as 'admin' | 'user') || 'user';
   },
 
-  async deleteUser(userId: string): Promise<void> {
-    const { error } = await supabase.auth.admin.deleteUser(userId);
+  async updateUserRole(userId: string, newRole: 'admin' | 'user'): Promise<void> {
+    const { error } = await supabase
+      .from('user_settings')
+      .update({ role: newRole })
+      .eq('user_id', userId);
 
     if (error) {
-      console.error('Error deleting user:', error);
+      console.error('Error updating user role:', error);
       throw error;
     }
   },
