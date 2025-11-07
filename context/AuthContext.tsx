@@ -33,45 +33,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initAuth = async () => {
+      console.log('[AuthContext.initAuth] Starting initialization...');
+
       const storedAdminId = localStorage.getItem('impersonation_admin_id');
       const storedTargetId = localStorage.getItem('impersonation_target_id');
       const storedTargetEmail = localStorage.getItem('impersonation_target_email');
+
+      console.log('[AuthContext.initAuth] LocalStorage values:', {
+        storedAdminId,
+        storedTargetId,
+        storedTargetEmail
+      });
+
       const isCurrentlyImpersonating = !!(storedAdminId && storedTargetEmail && storedTargetId);
+      console.log('[AuthContext.initAuth] Is impersonating:', isCurrentlyImpersonating);
 
       if (isCurrentlyImpersonating) {
-        console.log('[AuthContext] Impersonation detected:', storedTargetEmail);
+        console.log('[AuthContext.initAuth] Setting impersonation state for:', storedTargetEmail);
         setIsImpersonating(true);
         setOriginalAdminId(storedAdminId);
         setImpersonatedUserEmail(storedTargetEmail);
       }
 
+      console.log('[AuthContext.initAuth] Getting session from Supabase...');
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('[AuthContext.initAuth] Session retrieved, user ID:', session?.user?.id);
+
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
         if (isCurrentlyImpersonating) {
-          console.log('[AuthContext] Impersonation mode: forcing role to user');
+          console.log('[AuthContext.initAuth] Impersonation mode: forcing role to user and skipping DB calls');
           setUserRole('user');
           setIsActive(true);
+          console.log('[AuthContext.initAuth] Impersonation setup complete');
         } else {
+          console.log('[AuthContext.initAuth] Normal mode: fetching user role and status from DB for:', session.user.id);
           const role = await adminService.getUserRole(session.user.id);
+          console.log('[AuthContext.initAuth] Role fetched:', role);
+
           const status = await adminService.getUserStatus(session.user.id);
-          console.log('[AuthContext] Normal session, role:', role);
+          console.log('[AuthContext.initAuth] Status fetched:', status);
+
           setUserRole(role);
           setIsActive(status);
         }
+      } else {
+        console.log('[AuthContext.initAuth] No session found');
       }
+
+      console.log('[AuthContext.initAuth] Setting loading to false');
       setLoading(false);
+      console.log('[AuthContext.initAuth] Initialization complete');
     };
 
     initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log('[AuthContext.onAuthStateChange] Auth state changed, event:', _event);
+
       const storedAdminId = localStorage.getItem('impersonation_admin_id');
       const storedTargetId = localStorage.getItem('impersonation_target_id');
       const storedTargetEmail = localStorage.getItem('impersonation_target_email');
       const isCurrentlyImpersonating = !!(storedAdminId && storedTargetEmail && storedTargetId);
+
+      console.log('[AuthContext.onAuthStateChange] Is impersonating:', isCurrentlyImpersonating);
 
       setSession(session);
       setUser(session?.user ?? null);
@@ -82,13 +109,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUserRole('user');
           setIsActive(true);
         } else {
+          console.log('[AuthContext.onAuthStateChange] Normal mode: fetching role and status');
           const role = await adminService.getUserRole(session.user.id);
           const status = await adminService.getUserStatus(session.user.id);
-          console.log('[AuthContext.onAuthStateChange] Normal session, role:', role);
+          console.log('[AuthContext.onAuthStateChange] Normal session, role:', role, 'status:', status);
           setUserRole(role);
           setIsActive(status);
         }
       } else {
+        console.log('[AuthContext.onAuthStateChange] No session');
         setUserRole(null);
         setIsActive(true);
       }
