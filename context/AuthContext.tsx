@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '../services/supabaseClient';
 import { adminService } from '../services/adminService';
@@ -30,6 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isImpersonating, setIsImpersonating] = useState<boolean>(false);
   const [originalAdminId, setOriginalAdminId] = useState<string | null>(null);
   const [impersonatedUserEmail, setImpersonatedUserEmail] = useState<string | null>(null);
+  const isInitializedRef = useRef(false);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -85,6 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       console.log('[AuthContext.initAuth] Setting loading to false');
       setLoading(false);
+      isInitializedRef.current = true;
       console.log('[AuthContext.initAuth] Initialization complete');
     };
 
@@ -92,6 +94,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log('[AuthContext.onAuthStateChange] Auth state changed, event:', _event);
+
+      if (!isInitializedRef.current) {
+        console.log('[AuthContext.onAuthStateChange] Skipping - not yet initialized');
+        return;
+      }
 
       const storedAdminId = localStorage.getItem('impersonation_admin_id');
       const storedTargetId = localStorage.getItem('impersonation_target_id');
