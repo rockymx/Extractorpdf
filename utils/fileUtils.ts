@@ -55,7 +55,7 @@ export const formatAtencion = (start: string, end: string): string => {
       const diff = (endDate.getTime() - startDate.getTime()) / 60000;
 
       if (!isNaN(diff)) {
-        return `${start}-${end} T ${Math.round(diff)}min`;
+        return `${start}-${end}  (${Math.round(diff)}min)`;
       }
     } catch (e) {
       // Fallback to default return if parsing fails
