@@ -41,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
         <div>
             <a href="#" onClick={() => handleNavigate('main')} className="cursor-pointer">
               <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-emerald-400">
-                Datos de mi Consulta
+                Mi consulta
               </h1>
               <p className="text-slate-400">Extrae datos de tablas de tus PDFs con IA</p>
             </a>
@@ -67,7 +67,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
                         onClick={() => handleNavigate('history')}
                         className="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-700"
                     >
-                        Historial
+                        Documentos escaneados
                     </button>
                     <div className="border-t border-slate-700 my-1"></div>
                     <button
@@ -80,7 +80,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
                         onClick={() => handleNavigate('showData')}
                         className="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-700"
                     >
-                        Mostrar Datos
+                        Seleccionar Datos
                     </button>
                     <div className="border-t border-slate-700 my-1"></div>
                     <button
