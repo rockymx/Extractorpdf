@@ -22,6 +22,7 @@ import { saveExtractionToHistory } from './services/extractionHistoryService.ts'
 import { AdminDashboard } from './components/AdminDashboard.tsx';
 import { AccountDisabledAlert } from './components/AccountDisabledAlert.tsx';
 import { adminService } from './services/adminService.ts';
+import { ImpersonationBanner } from './components/ImpersonationBanner.tsx';
 
 export type CurrentPage = 'main' | 'config' | 'showData' | 'history' | 'login';
 
@@ -252,6 +253,7 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
+      <ImpersonationBanner />
       <Header onNavigate={navigateTo} />
       <main className="flex-grow flex flex-col items-center justify-center">
         {currentPage === 'main' && renderMainContent()}

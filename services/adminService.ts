@@ -102,4 +102,77 @@ export const adminService = {
     console.log(`[adminService.getUserStatus] User ${userId} status:`, data);
     return data?.is_active ?? true;
   },
+
+  async startImpersonation(adminId: string, targetUserId: string): Promise<void> {
+    console.log(`[adminService.startImpersonation] Admin ${adminId} starting impersonation of user ${targetUserId}`);
+
+    const { data: activeSession, error: checkError } = await supabase
+      .from('admin_impersonation_log')
+      .select('*')
+      .eq('admin_id', adminId)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error('[adminService.startImpersonation] Error checking active sessions:', checkError);
+      throw checkError;
+    }
+
+    if (activeSession) {
+      await supabase
+        .from('admin_impersonation_log')
+        .update({ is_active: false, ended_at: new Date().toISOString() })
+        .eq('id', activeSession.id);
+    }
+
+    const { error: insertError } = await supabase
+      .from('admin_impersonation_log')
+      .insert({
+        admin_id: adminId,
+        impersonated_user_id: targetUserId,
+        is_active: true,
+      });
+
+    if (insertError) {
+      console.error('[adminService.startImpersonation] Error creating impersonation log:', insertError);
+      throw insertError;
+    }
+
+    console.log('[adminService.startImpersonation] Impersonation session started successfully');
+  },
+
+  async endImpersonation(adminId: string): Promise<void> {
+    console.log(`[adminService.endImpersonation] Ending impersonation for admin ${adminId}`);
+
+    const { error } = await supabase
+      .from('admin_impersonation_log')
+      .update({ is_active: false, ended_at: new Date().toISOString() })
+      .eq('admin_id', adminId)
+      .eq('is_active', true);
+
+    if (error) {
+      console.error('[adminService.endImpersonation] Error ending impersonation:', error);
+      throw error;
+    }
+
+    console.log('[adminService.endImpersonation] Impersonation session ended successfully');
+  },
+
+  async getActiveImpersonation(adminId: string): Promise<{ impersonated_user_id: string } | null> {
+    console.log(`[adminService.getActiveImpersonation] Checking active impersonation for admin ${adminId}`);
+
+    const { data, error } = await supabase
+      .from('admin_impersonation_log')
+      .select('impersonated_user_id')
+      .eq('admin_id', adminId)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (error) {
+      console.error('[adminService.getActiveImpersonation] Error fetching active impersonation:', error);
+      return null;
+    }
+
+    return data;
+  },
 };

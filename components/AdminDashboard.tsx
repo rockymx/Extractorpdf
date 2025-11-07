@@ -4,9 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import { LoadingSpinner } from './LoadingSpinner';
 import { TrashIcon } from './icons/TrashIcon';
 import { MagnifyingGlassIcon } from './icons/MagnifyingGlassIcon';
+import { ArrowRightOnRectangleIcon } from './icons/ArrowRightOnRectangleIcon';
 
 export const AdminDashboard: React.FC = () => {
-  const { signOut } = useAuth();
+  const { signOut, impersonateUser } = useAuth();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -82,6 +83,19 @@ export const AdminDashboard: React.FC = () => {
 
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  const handleImpersonate = async (userId: string, email: string) => {
+    if (!confirm(`¿Seguro que deseas iniciar sesión como ${email}?`)) {
+      return;
+    }
+
+    try {
+      await impersonateUser(userId, email);
+    } catch (err) {
+      alert('Error al iniciar sesión como usuario');
+      console.error(err);
+    }
   };
 
   const filteredUsers = users.filter(user =>
@@ -220,16 +234,26 @@ export const AdminDashboard: React.FC = () => {
                         {formatDate(user.last_sign_in_at)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() => handleToggleStatus(user.id, user.is_active, user.email)}
-                          className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg transition-colors ${
-                            user.is_active
-                              ? 'bg-red-600/20 text-red-400 hover:bg-red-600/30'
-                              : 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
-                          }`}
-                        >
-                          {user.is_active ? 'Desactivar' : 'Activar'}
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleToggleStatus(user.id, user.is_active, user.email)}
+                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg transition-colors ${
+                              user.is_active
+                                ? 'bg-red-600/20 text-red-400 hover:bg-red-600/30'
+                                : 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
+                            }`}
+                          >
+                            {user.is_active ? 'Desactivar' : 'Activar'}
+                          </button>
+                          <button
+                            onClick={() => handleImpersonate(user.id, user.email)}
+                            className="inline-flex items-center gap-2 px-3 py-1 rounded-lg transition-colors bg-blue-600/20 text-blue-400 hover:bg-blue-600/30"
+                            title="Iniciar sesión como este usuario"
+                          >
+                            <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                            Iniciar sesión
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
