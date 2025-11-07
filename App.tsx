@@ -19,11 +19,12 @@ import { HistoryScreen } from './components/HistoryScreen.tsx';
 import { LoginScreen } from './components/LoginScreen.tsx';
 import { AuthProvider, useAuth } from './context/AuthContext.tsx';
 import { saveExtractionToHistory } from './services/extractionHistoryService.ts';
+import { AdminDashboard } from './components/AdminDashboard.tsx';
 
 export type CurrentPage = 'main' | 'config' | 'showData' | 'history' | 'login';
 
 const AppContent: React.FC = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, userRole } = useAuth();
   const settingsContext = useContext(SettingsContext);
   const [currentPage, setCurrentPage] = useState<CurrentPage>('main');
   const [workflow, setWorkflow] = useState<'excel' | 'database' | null>('database');
@@ -225,6 +226,10 @@ const AppContent: React.FC = () => {
 
   if (!user) {
     return <LoginScreen onNavigateBack={() => {}} />;
+  }
+
+  if (userRole === 'admin') {
+    return <AdminDashboard />;
   }
 
   if (settingsContext?.isLoadingSettings) {
