@@ -51,11 +51,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (session?.user) {
         if (isCurrentlyImpersonating) {
-          console.log('[AuthContext] Setting role to user due to impersonation');
+          console.log('[AuthContext] Impersonation mode: forcing role to user');
           setUserRole('user');
-          const status = await adminService.getUserStatus(storedTargetId!);
-          console.log('[AuthContext] Target user status:', status);
-          setIsActive(status);
+          setIsActive(true);
         } else {
           const role = await adminService.getUserRole(session.user.id);
           const status = await adminService.getUserStatus(session.user.id);
@@ -80,11 +78,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (session?.user) {
         if (isCurrentlyImpersonating) {
-          console.log('[AuthContext.onAuthStateChange] Impersonation active, setting role to user');
+          console.log('[AuthContext.onAuthStateChange] Impersonation mode: forcing role to user');
           setUserRole('user');
-          const status = await adminService.getUserStatus(storedTargetId!);
-          console.log('[AuthContext.onAuthStateChange] Target user status:', status);
-          setIsActive(status);
+          setIsActive(true);
         } else {
           const role = await adminService.getUserRole(session.user.id);
           const status = await adminService.getUserStatus(session.user.id);

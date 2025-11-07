@@ -43,7 +43,7 @@ interface SettingsProviderProps {
 }
 
 export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) => {
-  const { user, session } = useAuth();
+  const { user, session, isImpersonating } = useAuth();
   const [visibleColumns, setVisibleColumns] = useState<ColumnVisibility>(defaultVisibility);
   const [hideNSSIdentifier, setHideNSSIdentifier] = useState<boolean>(false);
   const [apiKey, setApiKeyState] = useState<string>('');
@@ -61,6 +61,17 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
         setVisibleColumns(defaultVisibility);
         setHideNSSIdentifier(false);
         isInitialLoadRef.current = true;
+        return;
+      }
+
+      if (isImpersonating) {
+        console.log('[SettingsContext] Impersonation mode: using default settings');
+        setIsLoadingSettings(false);
+        setUserId(user.id);
+        setApiKeyState('');
+        setVisibleColumns(defaultVisibility);
+        setHideNSSIdentifier(false);
+        isInitialLoadRef.current = false;
         return;
       }
 
@@ -102,12 +113,12 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     };
 
     loadSettings();
-  }, [user, userId]);
+  }, [user, userId, isImpersonating]);
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!user || userId !== user.id || isInitialLoadRef.current || isSavingRef.current) {
+    if (!user || userId !== user.id || isInitialLoadRef.current || isSavingRef.current || isImpersonating) {
       return;
     }
 
@@ -150,6 +161,11 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   }, [visibleColumns, hideNSSIdentifier, user, session, userId]);
 
   const setApiKey = async (key: string) => {
+    if (isImpersonating) {
+      console.log('[SettingsContext] Impersonation mode: API key updates disabled');
+      return;
+    }
+
     const validation = validateSession(user, session);
     if (!validation.isValid) {
       console.warn(`Cannot update API key: ${validation.reason}`);
