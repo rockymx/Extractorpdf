@@ -1,12 +1,15 @@
 
 import React from 'react';
-import type { ReportDetails } from '../types.ts';
+import type { ReportDetails, PatientRecord } from '../types.ts';
 import { UserCircleIcon } from './icons/UserCircleIcon.tsx';
 import { BuildingLibraryIcon } from './icons/BuildingLibraryIcon.tsx';
+import { ClockIcon } from './icons/ClockIcon.tsx';
+import { calculateConsultationHours } from '../utils/fileUtils.ts';
 
 interface ReportDetailsViewProps {
   details: ReportDetails;
   fileName?: string;
+  patientRecords?: PatientRecord[];
 }
 
 const DetailItem: React.FC<{ label: string; value: string; children?: React.ReactNode }> = ({ label, value, children }) => (
@@ -19,7 +22,9 @@ const DetailItem: React.FC<{ label: string; value: string; children?: React.Reac
   </div>
 );
 
-export const ReportDetailsView: React.FC<ReportDetailsViewProps> = ({ details, fileName }) => {
+export const ReportDetailsView: React.FC<ReportDetailsViewProps> = ({ details, fileName, patientRecords }) => {
+  const consultationHours = patientRecords ? calculateConsultationHours(patientRecords) : '-';
+
   return (
     <div className="bg-slate-800/50 p-4 rounded-xl shadow-lg mb-6">
       <div className="flex items-center justify-between mb-4 border-b border-slate-700 pb-2">
@@ -41,6 +46,9 @@ export const ReportDetailsView: React.FC<ReportDetailsViewProps> = ({ details, f
         <div className="flex items-center gap-2">
           <span className="font-bold text-xl text-sky-400">{details.turno}</span>
         </div>
+        <DetailItem label="Horas de Consulta" value={consultationHours}>
+            <ClockIcon className="w-6 h-6 text-sky-400 flex-shrink-0" />
+        </DetailItem>
       </div>
     </div>
   );

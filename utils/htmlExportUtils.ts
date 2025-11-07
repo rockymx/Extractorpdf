@@ -1,4 +1,5 @@
 import type { ExtractionResult, PatientRecord, ReportDetails } from '../types';
+import { calculateConsultationHours } from './fileUtils';
 
 interface ExportOptions {
   fileName: string;
@@ -49,7 +50,7 @@ function getCellContent(
   return record[key as keyof PatientRecord] || '';
 }
 
-function generateReportDetailsSection(details: ReportDetails): string {
+function generateReportDetailsSection(details: ReportDetails, consultationHours: string): string {
   return `
     <div class="report-details">
       <h2>Detalles del Reporte</h2>
@@ -77,6 +78,10 @@ function generateReportDetailsSection(details: ReportDetails): string {
         <div class="detail-item">
           <span class="detail-label">Turno:</span>
           <span class="detail-value">${details.turno || 'N/A'}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Horas de Consulta:</span>
+          <span class="detail-value">${consultationHours}</span>
         </div>
       </div>
     </div>
@@ -167,6 +172,8 @@ export function generateHTMLReport(
     hour: '2-digit',
     minute: '2-digit'
   });
+
+  const consultationHours = calculateConsultationHours(data.patientRecords);
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -435,7 +442,7 @@ export function generateHTMLReport(
     </header>
 
     <div class="content">
-      ${generateReportDetailsSection(data.reportDetails)}
+      ${generateReportDetailsSection(data.reportDetails, consultationHours)}
       ${generateStatisticsSection(data.patientRecords)}
       ${generatePatientTable(data.patientRecords, visibleColumns, hideNSSIdentifier)}
     </div>

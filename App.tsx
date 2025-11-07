@@ -203,7 +203,11 @@ const AppContent: React.FC = () => {
                     </button>
                 </div>
             )}
-            <ReportDetailsView details={extractedData.reportDetails} fileName={pdfFile?.name} />
+            <ReportDetailsView
+              details={extractedData.reportDetails}
+              fileName={pdfFile?.name}
+              patientRecords={extractedData.patientRecords}
+            />
             <PatientRecordsTable records={extractedData.patientRecords} />
           </div>
         )}

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import type { StoredExtraction } from '../types.ts';
 import { ReportDetailsView } from './ReportDetailsView.tsx';
 import { PatientRecordsTable } from './PatientRecordsTable.tsx';
-import { exportToExcel, formatAtencion } from '../utils/fileUtils.ts';
+import { exportToExcel, formatAtencion, calculateConsultationHours } from '../utils/fileUtils.ts';
 import { generateHTMLReport, downloadHTMLReport } from '../utils/htmlExportUtils.ts';
 import { SettingsContext } from '../context/SettingsContext.tsx';
 import { ClockIcon } from './icons/ClockIcon.tsx';
@@ -100,6 +100,7 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) 
     if (selectedExtraction) {
         const { data, file_name } = selectedExtraction;
         const exportFileName = file_name.replace(/\.pdf$/i, '') + '_pacientes.xlsx';
+        const consultationHours = calculateConsultationHours(data.patientRecords);
         const dataForExport = data.patientRecords.map(record => ({
             'No.': record.noProgresivo,
             'Nombre del Paciente': record.nombreDerechohabiente,
@@ -114,6 +115,22 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) 
             'Pase Unidad': record.paseOtraUnidad,
             'Riesgo Trab.': record.riesgoTrabajo,
         }));
+
+        dataForExport.unshift({
+            'No.': '',
+            'Nombre del Paciente': 'Horas de Consulta:',
+            'Diagnóstico Principal': consultationHours,
+            'NSS': '',
+            'Hora Cita': '',
+            'Inicio y Fin de Atencion': '',
+            '1ra Vez': '',
+            'Recetas': '',
+            'Días Incap.': '',
+            'Alta': '',
+            'Pase Unidad': '',
+            'Riesgo Trab.': '',
+        } as any);
+
         exportToExcel(dataForExport, exportFileName);
     }
   };
@@ -170,7 +187,11 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) 
                 Exportar a Excel
             </button>
         </div>
-        <ReportDetailsView details={selectedExtraction.data.reportDetails} fileName={selectedExtraction.file_name} />
+        <ReportDetailsView
+          details={selectedExtraction.data.reportDetails}
+          fileName={selectedExtraction.file_name}
+          patientRecords={selectedExtraction.data.patientRecords}
+        />
         <PatientRecordsTable records={selectedExtraction.data.patientRecords} />
       </div>
     );
