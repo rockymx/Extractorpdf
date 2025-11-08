@@ -2,6 +2,10 @@
   publish = "dist"
   command = "npm run build"
 
+# Las variables de entorno se configuran en Netlify Dashboard
+# Site configuration → Environment variables
+# No las incluyas aquí para mantenerlas seguras
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
