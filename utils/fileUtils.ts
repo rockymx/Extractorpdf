@@ -32,6 +32,51 @@ export const extractTextFromPdf = async (file: File): Promise<string> => {
 };
 
 /**
+ * Calculates total consultation hours from patient records.
+ * @param records Array of patient records with start and end times.
+ * @returns Total hours as a formatted string.
+ */
+export const calculateConsultationHours = (records: PatientRecord[]): string => {
+  if (!records || records.length === 0) return '0h 0min';
+  
+  let totalMinutes = 0;
+  
+  for (const record of records) {
+    const start = record.horaInicio;
+    const end = record.horaFin;
+    
+    if (start && end && /^\d{2}:\d{2}$/.test(start) && /^\d{2}:\d{2}$/.test(end)) {
+      try {
+        const [startHours, startMinutes] = start.split(':').map(Number);
+        const [endHours, endMinutes] = end.split(':').map(Number);
+
+        const startDate = new Date();
+        startDate.setHours(startHours, startMinutes, 0, 0);
+
+        const endDate = new Date();
+        endDate.setHours(endHours, endMinutes, 0, 0);
+
+        if (endDate < startDate) {
+          endDate.setDate(endDate.getDate() + 1);
+        }
+
+        const diff = (endDate.getTime() - startDate.getTime()) / 60000;
+        if (!isNaN(diff) && diff > 0) {
+          totalMinutes += diff;
+        }
+      } catch (e) {
+        // Skip invalid records
+      }
+    }
+  }
+  
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = Math.round(totalMinutes % 60);
+  
+  return `${hours}h ${minutes}min`;
+};
+
+/**
  * Formats start and end times into a combined string with duration.
  * e.g., "15:47-15:55 T 8min"
  * @param start The start time string (HH:MM).
