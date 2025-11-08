@@ -38,10 +38,7 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) 
     const loadHistory = async () => {
       if (!user) {
         setLoading(false);
-        return;
-      }
-
-      if (migrated) {
+        setHistory([]);
         return;
       }
 
@@ -53,20 +50,25 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateBack }) 
 
         console.log('[HistoryScreen] Loading history for user:', effectiveUserId, 'isImpersonating:', isImpersonating);
 
-        await migrateLocalStorageToSupabase(effectiveUserId);
+        // Solo migrar una vez
+        if (!migrated) {
+          await migrateLocalStorageToSupabase(effectiveUserId);
+          setMigrated(true);
+        }
+        
         const data = await getExtractionHistory(effectiveUserId);
         console.log('[HistoryScreen] Loaded history items:', data.length);
         setHistory(data);
-        setMigrated(true);
       } catch (error) {
         console.error('Error loading history:', error);
+        setHistory([]);
       } finally {
         setLoading(false);
       }
     };
 
     loadHistory();
-  }, [user, migrated, isImpersonating]);
+  }, [user?.id, isImpersonating]);
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('¿Estás seguro de que quieres eliminar esta entrada del historial?')) {
