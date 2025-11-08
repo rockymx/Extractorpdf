@@ -1,12 +1,9 @@
 
 import type { PatientRecord } from '../types.ts';
-import * as pdfjsLib from 'pdfjs-dist';
-import * as XLSX from 'xlsx';
 
-// Configure PDF.js to use built-in worker
-if (typeof window !== 'undefined' && 'Worker' in window) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.min.mjs';
-}
+// These are global variables exposed by the scripts in index.html
+declare const pdfjsLib: any;
+declare const XLSX: any;
 
 /**
  * Extracts all text content from a given PDF file.
@@ -14,6 +11,11 @@ if (typeof window !== 'undefined' && 'Worker' in window) {
  * @returns A promise that resolves with the full text content of the PDF.
  */
 export const extractTextFromPdf = async (file: File): Promise<string> => {
+  // Ensure worker is configured
+  if (typeof pdfjsLib !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+  
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const numPages = pdf.numPages;
@@ -55,7 +57,7 @@ export const formatAtencion = (start: string, end: string): string => {
       const diff = (endDate.getTime() - startDate.getTime()) / 60000;
 
       if (!isNaN(diff)) {
-        return `${start}-${end}  (${Math.round(diff)}min)`;
+        return `${start}-${end} T ${Math.round(diff)}min`;
       }
     } catch (e) {
       // Fallback to default return if parsing fails
@@ -66,74 +68,6 @@ export const formatAtencion = (start: string, end: string): string => {
   return parts.join('-');
 };
 
-
-/**
- * Calculates the total consultation time span from the earliest start to the latest end time.
- * @param records Array of patient records.
- * @returns A formatted string showing the time span (e.g., "8h 30min") or "-" if no valid data.
- */
-export const calculateConsultationHours = (records: PatientRecord[]): string => {
-  if (!records || records.length === 0) {
-    return '-';
-  }
-
-  const validTimes: { start: Date; end: Date }[] = [];
-
-  for (const record of records) {
-    const { inicioAtencion, finAtencion } = record;
-
-    if (!inicioAtencion || !finAtencion ||
-        !/^\d{2}:\d{2}$/.test(inicioAtencion) ||
-        !/^\d{2}:\d{2}$/.test(finAtencion)) {
-      continue;
-    }
-
-    try {
-      const [startHours, startMinutes] = inicioAtencion.split(':').map(Number);
-      const [endHours, endMinutes] = finAtencion.split(':').map(Number);
-
-      const startDate = new Date();
-      startDate.setHours(startHours, startMinutes, 0, 0);
-
-      const endDate = new Date();
-      endDate.setHours(endHours, endMinutes, 0, 0);
-
-      if (endDate < startDate) {
-        endDate.setDate(endDate.getDate() + 1);
-      }
-
-      validTimes.push({ start: startDate, end: endDate });
-    } catch (e) {
-      continue;
-    }
-  }
-
-  if (validTimes.length === 0) {
-    return '-';
-  }
-
-  const earliestStart = validTimes.reduce((min, curr) =>
-    curr.start < min ? curr.start : min, validTimes[0].start);
-
-  const latestEnd = validTimes.reduce((max, curr) =>
-    curr.end > max ? curr.end : max, validTimes[0].end);
-
-  const diffMs = latestEnd.getTime() - earliestStart.getTime();
-  const diffMinutes = Math.floor(diffMs / 60000);
-
-  const hours = Math.floor(diffMinutes / 60);
-  const minutes = diffMinutes % 60;
-
-  if (hours === 0 && minutes === 0) {
-    return '-';
-  }
-
-  if (minutes === 0) {
-    return `${hours}h`;
-  }
-
-  return `${hours}h ${minutes}min`;
-};
 
 /**
  * Exports an array of objects to an Excel file.
