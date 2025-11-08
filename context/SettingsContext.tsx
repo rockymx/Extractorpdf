@@ -169,14 +169,31 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     const validation = validateSession(user, session);
     if (!validation.isValid) {
       console.warn(`Cannot update API key: ${validation.reason}`);
-      return;
+      throw new Error(`Session validation failed: ${validation.reason}`);
     }
 
     try {
-      await updateUserSettings(user.id, key);
+      console.log('[SettingsContext] Updating API key for user:', user.id);
+      
+      // Primero actualizar el estado local para feedback inmediato
       setApiKeyState(key);
+      
+      // Luego guardar en la base de datos
+      const result = await updateUserSettings(user.id, key);
+      
+      if (!result) {
+        console.error('[SettingsContext] Failed to update API key in database');
+        throw new Error('Failed to save API key to database');
+      }
+      
+      console.log('[SettingsContext] API key updated successfully');
     } catch (error) {
-      console.error('Error updating API key:', error);
+      console.error('[SettingsContext] Error updating API key:', error);
+      // Revertir el estado local si falla
+      const settings = await getOrCreateUserSettings(user.id);
+      if (settings?.gemini_api_key) {
+        setApiKeyState(settings.gemini_api_key);
+      }
       throw error;
     }
   };
