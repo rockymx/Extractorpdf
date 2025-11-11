@@ -39,11 +39,11 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
     <header className="bg-slate-800/50 backdrop-blur-sm p-4 shadow-lg sticky top-0 z-10">
       <div className="max-w-6xl mx-auto flex justify-between items-center">
         <div>
-            <a href="#" onClick={() => handleNavigate('main')} className="cursor-pointer">
-              <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-emerald-400">
+            <a href="#" onClick={() => handleNavigate('main')} className="cursor-pointer block">
+              <h1 className="text-3xl font-extrabold inline-block bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent">
                 Mi consulta
               </h1>
-              <p className="text-slate-400">Extrae datos de tablas de tus PDFs con IA</p>
+              <p className="text-slate-400 mt-1">Extrae datos de tablas de tus PDFs con IA</p>
             </a>
         </div>
         <div className="relative" ref={menuRef}>
